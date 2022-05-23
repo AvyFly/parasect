@@ -5,15 +5,15 @@ description = "Parasect"
 authors = ["George Zogopoulos <geo.zogop.papal@gmail.com>"]
 license = "MIT"
 readme = "README.rst"
-homepage = "https://github.com/Georacer/parasect"
-repository = "https://github.com/Georacer/parasect"
+homepage = "https://github.com/AvyFly/parasect"
+repository = "https://github.com/AvyFly/parasect"
 documentation = "https://parasect.readthedocs.io"
 classifiers = [
     "Development Status :: 4 - Beta",
 ]
 
 [tool.poetry.urls]
-Changelog = "https://github.com/Georacer/parasect/releases"
+Changelog = "https://github.com/AvyFly/parasect/releases"
 
 [tool.poetry.dependencies]
 python = "^3.7"
