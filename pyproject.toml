@@ -16,7 +16,7 @@ classifiers = [
 Changelog = "https://github.com/AvyFly/parasect/releases"
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.8"
 click = "^8.0.1"
 PyYAML = "^6.0"
 defusedxml = "^0.7.1"
