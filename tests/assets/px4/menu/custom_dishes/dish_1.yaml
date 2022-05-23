@@ -1,0 +1,8 @@
+common:
+  ingredients:
+    - [NAV_RCL_ACT, 5, Termination desired]
+  allergens:
+    groups:
+      - [Iridium SBD, ~, Will not be used in any variant]
+    substances:
+      - [LED_RGB_MAXBRT, ~, No dis will ever use a LED]

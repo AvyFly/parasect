@@ -1,0 +1,12 @@
+{
+  "_template": "gh:cjolowicz/cookiecutter-hypermodern-python",
+  "author": "George Zogopoulos",
+  "development_status": "Development Status :: 4 - Beta",
+  "email": "geo.zogop.papal@gmail.com",
+  "friendly_name": "Parasect",
+  "github_user": "Georacer",
+  "license": "MIT",
+  "package_name": "parasect",
+  "project_name": "parasect",
+  "version": "0.9.0"
+}

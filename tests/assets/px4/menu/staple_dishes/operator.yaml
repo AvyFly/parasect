@@ -1,0 +1,3 @@
+common:
+  parameters:
+    - [GF_MAX_VER_DIST, ~, ~]
