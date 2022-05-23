@@ -13,4 +13,4 @@
    contributing
    Code of Conduct <codeofconduct>
    License <license>
-   Changelog <https://github.com/Georacer/parasect/releases>
+   Changelog <https://github.com/AvyFly/parasect/releases>

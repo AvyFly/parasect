@@ -22,11 +22,11 @@ Parasect
 .. |Read the Docs| image:: https://img.shields.io/readthedocs/parasect/latest.svg?label=Read%20the%20Docs
    :target: https://parasect.readthedocs.io/
    :alt: Read the documentation at https://parasect.readthedocs.io/
-.. |Tests| image:: https://github.com/Georacer/parasect/workflows/Tests/badge.svg
-   :target: https://github.com/Georacer/parasect/actions?workflow=Tests
+.. |Tests| image:: https://github.com/AvyFly/parasect/workflows/Tests/badge.svg
+   :target: https://github.com/AvyFly/parasect/actions?workflow=Tests
    :alt: Tests
-.. |Codecov| image:: https://codecov.io/gh/Georacer/parasect/branch/main/graph/badge.svg
-   :target: https://codecov.io/gh/Georacer/parasect
+.. |Codecov| image:: https://codecov.io/gh/AvyFly/parasect/branch/main/graph/badge.svg
+   :target: https://codecov.io/gh/AvyFly/parasect
    :alt: Codecov
 .. |pre-commit| image:: https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white
    :target: https://github.com/pre-commit/pre-commit
@@ -95,7 +95,7 @@ This project was generated from `@cjolowicz`_'s `Hypermodern Python Cookiecutter
 .. _MIT license: https://opensource.org/licenses/MIT
 .. _PyPI: https://pypi.org/
 .. _Hypermodern Python Cookiecutter: https://github.com/cjolowicz/cookiecutter-hypermodern-python
-.. _file an issue: https://github.com/Georacer/parasect/issues
+.. _file an issue: https://github.com/AvyFly/parasect/issues
 .. _pip: https://pip.pypa.io/
 .. github-only
 .. _Contributor Guide: CONTRIBUTING.rst
