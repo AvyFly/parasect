@@ -16,7 +16,7 @@ Parasect
 .. |Python Version| image:: https://img.shields.io/pypi/pyversions/parasect
    :target: https://pypi.org/project/parasect
    :alt: Python Version
-.. |License| image:: https://img.shields.io/pypi/l/parasect
+.. |License| image:: https://img.shields.io/github/license/AvyFly/parasect
    :target: https://opensource.org/licenses/MIT
    :alt: License
 .. |Read the Docs| image:: https://img.shields.io/readthedocs/parasect/latest.svg?label=Read%20the%20Docs
