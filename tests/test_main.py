@@ -6,14 +6,10 @@ import pytest
 from click.testing import CliRunner
 
 import parasect
+from . import utils
+from .utils import setup_paths  # noqa: F401 # Setup paths is an autouse fixture
 from parasect import __main__
-
-
-PX4_ASSETS_PATH = path.join(path.dirname(path.abspath(__file__)), "assets", "px4")
-PX4_DEFAULT_PARAMS_XML = path.join(PX4_ASSETS_PATH, "parameters_3fe4c6e.xml")
-PX4_JMAVSIM_PARAMS = path.join(PX4_ASSETS_PATH, "default_jmavsim_3fe4c6e.params")
-PX4_GAZEBO_PARAMS = path.join(PX4_ASSETS_PATH, "default_gazebo_3fe4c6e.params")
-PX4_INPUT_FOLDER = path.join(PX4_ASSETS_PATH, "menu")
+from parasect import _helpers
 
 
 @pytest.fixture
@@ -33,20 +29,27 @@ class TestLogging:
 
     def test_debug_file(self, runner: CliRunner) -> None:
         """Ensure a log file is generated upon demand."""
+        _helpers.Logger().clear()
         with runner.isolated_filesystem():
             _ = runner.invoke(
                 __main__.cli,
-                ["--debug", "compare", PX4_JMAVSIM_PARAMS, PX4_GAZEBO_PARAMS],
+                [
+                    "--debug",
+                    "compare",
+                    utils.PX4_JMAVSIM_PARAMS,
+                    utils.PX4_GAZEBO_PARAMS,
+                ],
             )
             log_path = path.join(os.getcwd(), "parasect.log")
             assert os.path.isfile(log_path)
 
     def test_no_debug(self, runner: CliRunner) -> None:
         """Ensure a log file is not generated in non-debug mode."""
+        _helpers.Logger().clear()
         with runner.isolated_filesystem():
             _ = runner.invoke(
                 __main__.cli,
-                ["compare", PX4_JMAVSIM_PARAMS, PX4_GAZEBO_PARAMS],
+                ["compare", utils.PX4_JMAVSIM_PARAMS, utils.PX4_GAZEBO_PARAMS],
             )
             log_path = path.join(os.getcwd(), "parasect.log")
             assert not os.path.isfile(log_path)
@@ -59,8 +62,8 @@ class TestCompare:
         """Make sure the compare_helper API generates the correct number of lines."""
         num_exp_lines = 5 + 1 + 3 - 1
         output_str = parasect.compare(
-            file_1=PX4_JMAVSIM_PARAMS,
-            file_2=PX4_GAZEBO_PARAMS,
+            file_1=utils.PX4_JMAVSIM_PARAMS,
+            file_2=utils.PX4_GAZEBO_PARAMS,
             input_folder=None,
             nocal=False,
             nouser=False,
@@ -72,7 +75,8 @@ class TestCompare:
         """Make sure only one parameter differs."""
         num_exp_lines = 5 + 1 + 3
         result = runner.invoke(
-            __main__.cli, ["compare", PX4_JMAVSIM_PARAMS, PX4_GAZEBO_PARAMS]
+            __main__.cli,
+            ["compare", utils.PX4_JMAVSIM_PARAMS, utils.PX4_GAZEBO_PARAMS],
         )
         assert len(result.output.splitlines()) == num_exp_lines
 
@@ -86,12 +90,11 @@ class TestBuild:
             parasect.build(
                 meal_ordered=None,
                 format=parasect._helpers.Formats.px4af,
-                input_folder=PX4_INPUT_FOLDER,
-                default_params=PX4_DEFAULT_PARAMS_XML,
+                input_folder=utils.PX4_INPUT_FOLDER,
+                default_params=utils.PX4_DEFAULT_PARAMS_XML,
                 output_folder="output_folder",
             )
             log_path = path.join(os.getcwd(), "output_folder", "1_light_meal")
-            print(os.listdir(path.join(os.getcwd())))
             # assert False
             assert os.path.isfile(log_path)
 
@@ -107,9 +110,9 @@ class TestBuild:
                     "-f",
                     "px4af",
                     "-i",
-                    PX4_INPUT_FOLDER,
+                    utils.PX4_INPUT_FOLDER,
                     "-d",
-                    PX4_DEFAULT_PARAMS_XML,
+                    utils.PX4_DEFAULT_PARAMS_XML,
                 ],
             )
             log_path = path.join(os.getcwd(), "output_folder", "1_light_meal")
