@@ -4,6 +4,7 @@ import csv
 import logging
 import math
 import os
+import pathlib
 import typing
 from enum import Enum
 from typing import Any
@@ -22,7 +23,6 @@ import yaml  # type: ignore
 from defusedxml import ElementTree as eTree  # type: ignore
 from pydantic import BaseModel
 from pydantic import root_validator
-from pydantic import ValidationError
 
 
 class Borg:
@@ -34,6 +34,11 @@ class Borg:
         """Class constructor."""
         self.__dict__ = self._shared_state
 
+    def clear(self) -> None:
+        """Clear the instance dictionary and start afresh."""
+        self._shared_state = {}
+        self._first_call = True
+
 
 class Logger(Borg):
     """Singleton to carry package-level settings."""
@@ -42,32 +47,16 @@ class Logger(Borg):
     _first_call: bool = True
     logger: logging.Logger
 
-    def __init__(self) -> None:
+    def __init__(self, debug: bool = False) -> None:
         """Class constructor."""
         Borg.__init__(self)
 
         if self._first_call:
-            new_file = True
+            self.logger = setup_logger(debug)
             self._first_call = False
-        else:
-            new_file = False
-
-        if self._first_call:
-            self.logger = setup_logger(self._debug, new_file=new_file)
-
-    @property
-    def debug(self) -> bool:
-        """Debug attribute getter."""
-        return self._debug
-
-    @debug.setter
-    def debug(self, value: bool) -> None:
-        """Debug attribute setter."""
-        self._debug = value
-        self.logger = setup_logger(self._debug)
 
 
-def setup_logger(debug: bool, new_file: bool = False) -> logging.Logger:
+def setup_logger(debug: bool) -> logging.Logger:
     """Build and return a logger for the parasect package."""
     # Get the logger
     logger = logging.getLogger("parasect")
@@ -78,11 +67,7 @@ def setup_logger(debug: bool, new_file: bool = False) -> logging.Logger:
     # Construct a new handler
     log_format = "%(name)s - %(levelname)s - %(message)s"
     if debug:
-        if new_file:
-            mode = "w"
-        else:
-            mode = "a"
-        file_handler = logging.FileHandler("parasect.log", mode)
+        file_handler = logging.FileHandler("parasect.log", "w")
         formatter = logging.Formatter(log_format)
         file_handler.setFormatter(formatter)
         file_handler.setLevel(logging.DEBUG)
@@ -141,16 +126,25 @@ class ConfigPaths(Borg):
 
     def _get_path(self) -> str:
         configs_path = None
-        try:
-            configs_path = os.environ["PARASECT_PATH"]
-        except KeyError:
-            get_logger().debug("Environment variable for parasect path not set")
+        # First check if a specific CUSTOM_PATH has been defined.
         if self.CUSTOM_PATH:
             if not os.path.isdir(self.CUSTOM_PATH):
-                raise OSError(
+                raise NotADirectoryError(
                     "Given configuration path {self.CUSTOM_PATH} doesn't exist"
                 )
             configs_path = self.CUSTOM_PATH
+
+        if not configs_path:
+            # If not, check if the environmental variable is set
+            try:
+                configs_path = os.environ["PARASECT_PATH"]
+                if not pathlib.Path(configs_path).expanduser().is_dir():
+                    raise NotADirectoryError(
+                        f"PARASECT_PATH points to invalid directory {configs_path}"
+                    )
+            except KeyError:
+                get_logger().debug("Environment variable for parasect path not set")
+
         if configs_path is None:
             raise RuntimeError("Configurations path not specified.")
         get_logger().debug(f"Pointing configurations to {configs_path}")
@@ -210,10 +204,6 @@ class Substances(BaseModel):
     def __iter__(self):
         """Return an interable of the model."""
         return iter(self.__root__)
-
-    def __getitem__(self, item):
-        """Access the model in a dict-like manner."""
-        return self.__root__[item]
 
 
 class Allergens(BaseModel):
@@ -279,7 +269,9 @@ class MealMenuModel(BaseModel):
                     or cls._is_staple_dish(dish)
                     or cls._is_reserved_option(dish)
                 ):
-                    raise AssertionError(f"Meal contains invalid field {dish}.")
+                    raise AssertionError(
+                        f"Meal {meal} contains invalid field/dish {dish}."
+                    )
         return values
 
     @classmethod
@@ -306,10 +298,6 @@ class MealMenuModel(BaseModel):
             return True
         else:
             return False
-
-    def __iter__(self):
-        """Return an interable of the model."""
-        return iter(self.__root__)
 
     def __getitem__(self, item):
         """Access the model in a dict-like manner."""
@@ -348,27 +336,6 @@ def _build_dict_from_yaml(filepath: str) -> Dict:
     with open(filepath) as fp:
         model_dict = yaml.load(fp, Loader=yaml.SafeLoader)  # type: Dict
     return model_dict
-
-
-def _load_model(filepath: str) -> DishModel:
-    """Read a .yaml file as a model.
-
-    Args:
-        filepath: The full file-path to a .yaml file.
-
-    Returns:
-        DishModel: A Pydantic model with a DishModel description.
-
-    Raises:
-        RuntimeError: If the file does not comply to the expected format.
-    """
-    dictionary = _build_dict_from_yaml(filepath)
-    try:
-        return DishModel.parse_obj(dictionary)
-    except ValidationError as e:
-        raise RuntimeError(
-            "Could not interpret the input neither as Meals nor as Dish"
-        ) from e
 
 
 def get_dish(path: str, dish_name: str) -> DishModel:

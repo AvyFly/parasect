@@ -19,7 +19,7 @@ from .compare import compare_helper
 @click.option("--debug", is_flag=True, help="Generate log file.")
 def cli(debug: bool) -> None:
     """Main CLI entry point."""
-    Logger().debug = debug
+    Logger(debug=debug)
 
 
 @click.command()
