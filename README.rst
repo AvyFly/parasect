@@ -83,6 +83,8 @@ Please see the `Command-line Reference <CLI usage_>`_ for details.
 Additionally, it exposes a minimal API, enabling automated operations.
 This is described in the `API Reference <API usage_>`_.
 
+It is strongly recommended that you read the Concepts_ that *Parasect* employs, if you plan to make full use of it.
+
 
 Contributing
 ------------
@@ -121,5 +123,6 @@ This project was generated from `@cjolowicz`_'s `Hypermodern Python Cookiecutter
 .. _Contributor Guide: CONTRIBUTING.rst
 .. _CLI usage: https://parasect.readthedocs.io/en/latest/usage.html
 .. _API usage: https://parasect.readthedocs.io/en/latest/reference.html
+.. _Concepts: https://parasect.readthedocs.io/en/latest/concepts.html
 .. _PX4: https://px4.io/
 .. _Poetry: https://python-poetry.org/

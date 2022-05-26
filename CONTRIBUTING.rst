@@ -88,7 +88,14 @@ or the command-line interface:
 How to test the project
 -----------------------
 
-Run the full test suite:
+The *Parasect* CLI offers debug output in the form of a ``parasect.log`` file.
+The file can be created by issuing the ``--debug`` flag when calling *Parasect*. 
+
+.. code:: console
+
+   $ parasect --debug <rest_of_the_arguments>
+
+Additionally, you can run the full test suite:
 
 .. code:: console
 

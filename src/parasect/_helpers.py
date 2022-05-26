@@ -183,7 +183,6 @@ class Formats(Enum):
 
     px4 = "px4"
     px4af = "px4af"
-    apm = "apm"
 
 
 ReservedOptions = Literal["frame_id", "sitl", "parent"]

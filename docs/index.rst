@@ -9,6 +9,7 @@
    :maxdepth: 1
 
    usage
+   concepts
    reference
    contributing
    Code of Conduct <codeofconduct>
