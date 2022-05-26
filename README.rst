@@ -36,16 +36,25 @@ Parasect
    :alt: Black
 
 
+Welcome to *Parasect*, a utility for manipulating parameter sets for autopilots!
+
 Features
 --------
 
-* TODO
+*Parasect* has two-fold capabilities:
 
+1. Compare two parameter sets and highlighting their differences.
+2. Parsing from user-defined content and generating new parameter sets, ready for loading into an autopilot.
+
+List of currently supported autopilots:
+
+* PX4_
 
 Requirements
 ------------
 
-* TODO
+*Parasect* is a pure-Python project. Its requirements are managed by the Poetry_ dependency manager.
+When you install *Parasect* via pip_ its requirements will also be installed automatically.
 
 
 Installation
@@ -61,7 +70,18 @@ You can install *Parasect* via pip_ from PyPI_:
 Usage
 -----
 
-Please see the `Command-line Reference <Usage_>`_ for details.
+*Parasect* is primarily used as a command-line program.
+In its simplest form, two parameter files can be compared via:
+
+.. code:: console
+
+   $ parasect compare <FILE_1> <FILE_2>
+
+The usage for building parameter sets is more involved.
+Please see the `Command-line Reference <CLI usage_>`_ for details.
+
+Additionally, it exposes a minimal API, enabling automated operations.
+This is described in the `API Reference <API usage_>`_.
 
 
 Contributing
@@ -99,4 +119,7 @@ This project was generated from `@cjolowicz`_'s `Hypermodern Python Cookiecutter
 .. _pip: https://pip.pypa.io/
 .. github-only
 .. _Contributor Guide: CONTRIBUTING.rst
-.. _Usage: https://parasect.readthedocs.io/en/latest/usage.html
+.. _CLI usage: https://parasect.readthedocs.io/en/latest/usage.html
+.. _API usage: https://parasect.readthedocs.io/en/latest/reference.html
+.. _PX4: https://px4.io/
+.. _Poetry: https://python-poetry.org/
