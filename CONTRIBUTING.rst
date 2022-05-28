@@ -89,7 +89,7 @@ How to test the project
 -----------------------
 
 The *Parasect* CLI offers debug output in the form of a ``parasect.log`` file.
-The file can be created by issuing the ``--debug`` flag when calling *Parasect*. 
+The file can be created by issuing the ``--debug`` flag when calling *Parasect*.
 
 .. code:: console
 

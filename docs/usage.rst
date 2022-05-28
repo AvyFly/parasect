@@ -73,7 +73,7 @@ Creating Custom Dishes
 First, create a folder and make two subfolders in it: ``custom_dishes`` and ``staple_dishes``.
 
 Within the ``custom_dishes`` folder, create as many Dishes ``.yaml`` files as you want and name them as you want.
-Each Dish is supposed to reflect one coherent set of parameters, for example related to PID gains, peripherals configuration, 
+Each Dish is supposed to reflect one coherent set of parameters, for example related to PID gains, peripherals configuration,
 Remote Controller configuration or the installed battery.
 
 Start by defining your Common Ingredients, as a list of triplets:
@@ -96,17 +96,17 @@ This is a dictionary where you can specialize your Dish with different Ingredien
 Filling in Staple Dishes
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-There are currently four Staple Dishes in *Parasect*: ``calibration.yaml``, ``operator.yaml``, ``header.yaml`` and 
+There are currently four Staple Dishes in *Parasect*: ``calibration.yaml``, ``operator.yaml``, ``header.yaml`` and
 ``footer.yaml``. They are reserved dishes that are used by *Parasect* in either the comparison or generation functions.
 
 ``calibration.yaml``: This is Dish (with the usual Dish syntax) that contains the names of the calibration parameters
 of your autopilot. List those parameters here to: a) not take them into account when comparing parameter sets and b)
-to remove them from generated parameter sets. You do not need to specify a value for a calibration parameter, leave it 
+to remove them from generated parameter sets. You do not need to specify a value for a calibration parameter, leave it
 as None (``~``).
 
 ``operator.yaml``: This is Dish (with the usual Dish syntax) that contains the names of the operator parameters
 of your autopilot. List those parameters here to: a) not take them into account when comparing parameter sets and b)
-to remove them from generated parameter sets. You do not need to specify a value for a operator parameter, leave it 
+to remove them from generated parameter sets. You do not need to specify a value for a operator parameter, leave it
 as None (``~``).
 
 ``header.yaml`` and ``footer.yaml``. These are files that don't follow the usual Dish syntax. They contain the boilerplate
@@ -128,7 +128,7 @@ Create a ``meals.yaml`` file in the top-level directory of your Menu folder. Thi
 
 Each section represents a unique aircraft configuration and it starts with an arbitrary aircraft name.
 
-Then, each in each row you add Dishes to your Meal. The key is the Dish name and the value is the Dish Variant. Set the 
+Then, each in each row you add Dishes to your Meal. The key is the Dish name and the value is the Dish Variant. Set the
 value to None (``~``) to use only the Dish Common section. Refer to the nested Variants using a slash (``/``).
 
 There are also some reserved keywords for the Meal dictionary:
