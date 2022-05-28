@@ -112,6 +112,8 @@ please `file an issue`_ along with a detailed description.
 Credits
 -------
 
+This project was sponsored by `Avy B.V. <Avy_>`_, a UAV company in Amsterdam.
+
 This project was generated from `@cjolowicz`_'s `Hypermodern Python Cookiecutter`_ template.
 
 .. _@cjolowicz: https://github.com/cjolowicz
@@ -126,5 +128,6 @@ This project was generated from `@cjolowicz`_'s `Hypermodern Python Cookiecutter
 .. _Concepts: https://parasect.readthedocs.io/en/latest/concepts.html
 .. _PX4: https://px4.io/
 .. _Poetry: https://python-poetry.org/
+.. _Avy: https://avy.eu
 .. github-only
 .. _Contributor Guide: CONTRIBUTING.rst

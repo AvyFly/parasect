@@ -2,7 +2,10 @@ Usage
 =====
 
 .. _Concepts: concepts.html
+.. _Reference: reference.html
 .. _MAVLink: https://mavlink.io/en/
+
+.. seealso:: A full reference of the CLI and the API is available `here <Reference_>`_.
 
 CLI Usage
 ---------
@@ -133,10 +136,3 @@ There are also some reserved keywords for the Meal dictionary:
 * ``frame_id``
 * ``sitl``
 * ``parent``
-
-Full CLI Reference
-------------------
-
-.. click:: parasect.__main__:cli
-   :prog: parasect
-   :nested: full
