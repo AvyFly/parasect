@@ -56,6 +56,8 @@ Requirements
 *Parasect* is a pure-Python project. Its requirements are managed by the Poetry_ dependency manager.
 When you install *Parasect* via pip_ its requirements will also be installed automatically.
 
+Currently *Parasect* has only been tested in **Ubuntu Linux**.
+
 
 Installation
 ------------
@@ -119,10 +121,10 @@ This project was generated from `@cjolowicz`_'s `Hypermodern Python Cookiecutter
 .. _Hypermodern Python Cookiecutter: https://github.com/cjolowicz/cookiecutter-hypermodern-python
 .. _file an issue: https://github.com/AvyFly/parasect/issues
 .. _pip: https://pip.pypa.io/
-.. github-only
-.. _Contributor Guide: CONTRIBUTING.rst
 .. _CLI usage: https://parasect.readthedocs.io/en/latest/usage.html
 .. _API usage: https://parasect.readthedocs.io/en/latest/reference.html
 .. _Concepts: https://parasect.readthedocs.io/en/latest/concepts.html
 .. _PX4: https://px4.io/
 .. _Poetry: https://python-poetry.org/
+.. github-only
+.. _Contributor Guide: CONTRIBUTING.rst
