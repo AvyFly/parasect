@@ -4,7 +4,7 @@ from datetime import datetime
 
 project = "Parasect"
 author = "George Zogopoulos"
-copyright = f"{datetime.now().year}, {author}"
+copyright = f"{datetime.now().year}, Avy B.V."
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",

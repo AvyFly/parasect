@@ -43,13 +43,30 @@ Request features on the `Issue Tracker`_.
 How to set up your development environment
 ------------------------------------------
 
-You need Python 3.8+ and the following tools:
+First of all, clone the *Parasect* repository.
+
+Then, you need Python 3.8+ and the following tools:
 
 - Poetry_
 - Nox_
 - nox-poetry_
 
-Install the package with development requirements:
+Install Poetry_ by downloading and running install-poetry.py_:
+
+.. _install-poetry.py: https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py
+
+.. code:: console
+
+   $ python install-poetry.py
+
+Install Nox_ and nox-poetry_:
+
+.. code:: console
+
+   $ pipx install nox
+   $ pipx inject nox nox-poetry
+
+Navigate into the location where you cloned *Parasect* and install the package with development requirements:
 
 .. code:: console
 
@@ -71,7 +88,14 @@ or the command-line interface:
 How to test the project
 -----------------------
 
-Run the full test suite:
+The *Parasect* CLI offers debug output in the form of a ``parasect.log`` file.
+The file can be created by issuing the ``--debug`` flag when calling *Parasect*.
+
+.. code:: console
+
+   $ parasect --debug <rest_of_the_arguments>
+
+Additionally, you can run the full test suite:
 
 .. code:: console
 
@@ -104,10 +128,10 @@ Open a `pull request`_ to submit changes to this project.
 Your pull request needs to meet the following guidelines for acceptance:
 
 - The Nox test suite must pass without errors and warnings.
-- Include unit tests. This project maintains 100% code coverage.
+- Include unit tests. You must provide tests covering 100% of your code changes and additions.
 - If your changes add functionality, update the documentation accordingly.
 
-Feel free to submit early, though—we can always iterate on this.
+Feel free to submit early. Mark your PR as WIP (Work in Progress) in the PR title, to signal that it is not in its final form yet.
 
 To run linting and code formatting checks before committing your change, you can install pre-commit as a Git hook by running the following command:
 
@@ -115,8 +139,8 @@ To run linting and code formatting checks before committing your change, you can
 
    $ nox --session=pre-commit -- install
 
-It is recommended to open an issue before starting work on anything.
-This will allow a chance to talk it over with the owners and validate your approach.
+If you are unsure how your contribution would fit in *Parasect*, feel free to raise an issue for discussion.
+It is always preferable to spend a little time discussing your approach, instead of spending a lot of effort on a large chunk of code that might be rejected.
 
 .. _pull request: https://github.com/AvyFly/parasect/pulls
 .. github-only

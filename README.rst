@@ -36,16 +36,27 @@ Parasect
    :alt: Black
 
 
+Welcome to *Parasect*, a utility for manipulating parameter sets for autopilots!
+
 Features
 --------
 
-* TODO
+*Parasect* has two-fold capabilities:
 
+1. Compare two parameter sets and highlighting their differences.
+2. Parsing from user-defined content and generating new parameter sets, ready for loading into an autopilot.
+
+List of currently supported autopilots:
+
+* PX4_
 
 Requirements
 ------------
 
-* TODO
+*Parasect* is a pure-Python project. Its requirements are managed by the Poetry_ dependency manager.
+When you install *Parasect* via pip_ its requirements will also be installed automatically.
+
+Currently *Parasect* has only been tested in **Ubuntu Linux**.
 
 
 Installation
@@ -61,7 +72,20 @@ You can install *Parasect* via pip_ from PyPI_:
 Usage
 -----
 
-Please see the `Command-line Reference <Usage_>`_ for details.
+*Parasect* is primarily used as a command-line program.
+In its simplest form, two parameter files can be compared via:
+
+.. code:: console
+
+   $ parasect compare <FILE_1> <FILE_2>
+
+The usage for building parameter sets is more involved.
+Please see the `Command-line Reference <CLI usage_>`_ for details.
+
+Additionally, it exposes a minimal API, enabling automated operations.
+This is described in the `API Reference <API usage_>`_.
+
+It is strongly recommended that you read the Concepts_ that *Parasect* employs, if you plan to make full use of it.
 
 
 Contributing
@@ -88,6 +112,8 @@ please `file an issue`_ along with a detailed description.
 Credits
 -------
 
+This project was sponsored by `Avy B.V. <Avy_>`_, a UAV company in Amsterdam.
+
 This project was generated from `@cjolowicz`_'s `Hypermodern Python Cookiecutter`_ template.
 
 .. _@cjolowicz: https://github.com/cjolowicz
@@ -97,6 +123,11 @@ This project was generated from `@cjolowicz`_'s `Hypermodern Python Cookiecutter
 .. _Hypermodern Python Cookiecutter: https://github.com/cjolowicz/cookiecutter-hypermodern-python
 .. _file an issue: https://github.com/AvyFly/parasect/issues
 .. _pip: https://pip.pypa.io/
+.. _CLI usage: https://parasect.readthedocs.io/en/latest/usage.html
+.. _API usage: https://parasect.readthedocs.io/en/latest/reference.html
+.. _Concepts: https://parasect.readthedocs.io/en/latest/concepts.html
+.. _PX4: https://px4.io/
+.. _Poetry: https://python-poetry.org/
+.. _Avy: https://avy.eu
 .. github-only
 .. _Contributor Guide: CONTRIBUTING.rst
-.. _Usage: https://parasect.readthedocs.io/en/latest/usage.html

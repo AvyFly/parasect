@@ -644,9 +644,7 @@ class Meal:
 
     def export(self, format: Formats) -> Iterable[str]:
         """Export general method."""
-        if format == Formats.apm:
-            raise NotImplementedError("Ardupilot format not implemented yet")
-        elif format == Formats.px4:
+        if format == Formats.px4:
             return self.export_to_px4()
         elif format == Formats.px4af:
             return self.export_to_px4af()
