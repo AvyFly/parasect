@@ -1,0 +1,26 @@
+common:
+  ingredients:
+    - [FW_AIRSPD_MAX, 20, I've measured this at WOT]
+    - [FW_AIRSPD_MIN, 13, I know I stall here]
+    - [FW_AIRSPD_TRIM, 15, I'm cruising comfortably here]
+  allergens:
+    groups:
+      - [Attitude Q estimator, ~, Only used for multicopter format]
+      - [Rover Position Control, ~, Not applicable to VTOL]
+    substances:
+      - [TC_A0_ID, ~, Not applicable to my configuration]
+
+variants:
+  my_vtol_1:
+    common:
+      ingredients:
+        - [MC_PITCHRATE_D, 0, ~]
+        - [MC_PITCHRATE_I, 0.01, ~]
+        - [MC_PITCHRATE_P, 0.2, ~]
+
+  my_vtol_2:
+    common:
+      ingredients:
+        - [MC_PITCHRATE_D, 0.005, ~]
+        - [MC_PITCHRATE_I, 0.1, ~]
+        - [MC_PITCHRATE_P, 0.21, ~]

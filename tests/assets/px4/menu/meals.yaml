@@ -1,6 +1,13 @@
-light_meal:
+my_vtol_1:
   frame_id: 1
-  dish_1: ~
-  dish_2: ~
+  battery: ~
+  tuning: my_vtol_1
+  header: ~
+  footer: ~
+
+my_vtol_2:
+  frame_id: 2
+  battery: ~
+  tuning: my_vtol_2
   header: ~
   footer: ~

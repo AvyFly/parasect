@@ -1,0 +1,3 @@
+common:
+  parameters:
+    - [SALT, ~, Each has his own taste]

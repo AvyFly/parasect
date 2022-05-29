@@ -3,13 +3,10 @@ common:
 formats:
   px4af:
     common:
-    variants:
-      light_meal:
-        common:
-          - "Footer line 1\n"
-          - "Footer line 2\n"
+      - "set MIXER quad_x"
+      - "set MIXER_AUX vtol_AAERT"
+      - ""
+      - "set PWM_OUT 1234"
 
   px4:
     common:
-      - "Footer line 1\n"
-      - "Footer line 2\n"

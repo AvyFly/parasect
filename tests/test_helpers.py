@@ -5,7 +5,11 @@ import pathlib
 import pydantic
 import pytest
 
-from .utils import setup_paths  # noqa: F401 # Setup paths is an autouse fixture
+from .utils import (  # noqa: F401 # setup_generic is used by pytest as string
+    setup_generic,
+)
+from .utils import setup_logger  # noqa: F401 # setup_logger is an autouse fixture
+from .utils import setup_px4  # noqa: F401 # setup_px4 is used by pytest as string
 from parasect import _helpers
 
 
@@ -39,7 +43,8 @@ class TestLogger:
         assert log_file.read_text() == "parasect - DEBUG - new line\n"
 
 
-class TestConfigPaths:
+@pytest.mark.usefixtures("setup_px4")
+class TestConfigPathsPX4:
     """Testing of the ConfigPaths class."""
 
     def test_no_env_path(self):
@@ -88,6 +93,7 @@ class TestConfigPaths:
             _helpers.ConfigPaths().default_parameters
 
 
+@pytest.mark.usefixtures("setup_generic")
 class TestMealMenuModel:
     """Testing the MealMenuModel class."""
 
@@ -98,7 +104,8 @@ class TestMealMenuModel:
             _helpers.MealMenuModel.parse_obj(bad_dish)
 
 
-class TestParameter:
+@pytest.mark.usefixtures("setup_generic")
+class TestParameterGeneric:
     """Test Parameter-related functionality."""
 
     def test_wrong_type(self):
