@@ -10,10 +10,10 @@ from typing import Union
 from ._helpers import ConfigPaths
 from ._helpers import get_logger
 from ._helpers import read_params
-from .build import Calibration
-from .build import Parameter
-from .build import ParameterList
-from .build import UserDefined
+from .build_lib import Calibration
+from .build_lib import Parameter
+from .build_lib import ParameterList
+from .build_lib import UserDefined
 
 
 PARAM_EPS_PCT = 0.006  # This value allow a displayed precision of 3 digits

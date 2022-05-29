@@ -18,8 +18,8 @@ PX4_GAZEBO_PARAMS = path.join(PX4_ASSETS_PATH, "default_gazebo_3fe4c6e.params")
 PX4_INPUT_FOLDER = path.join(PX4_ASSETS_PATH, "menu")
 
 
-@pytest.fixture
-def setup_generic():
+@pytest.fixture(name="setup_generic")
+def fixture_setup_generic():
     """Set up the parasect paths for generic testign."""
     os.environ["PARASECT_PATH"] = GENERIC_INPUT_FOLDER
     if "PARASECT_DEFAULTS" in os.environ.keys():

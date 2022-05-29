@@ -4,3 +4,24 @@ light_meal:
   meat_and_potatoes: ~
   header: ~
   footer: ~
+
+spicy_meal:
+  frame_id: 2
+  salad: ~
+  meat_and_potatoes: spicy
+  header: ~
+  footer: ~
+
+full_meal:
+  frame_id: 3
+  salad: ~
+  meat_and_potatoes: ~
+  desert: ~
+  header: ~
+  footer: ~
+
+christmass_at_grandmas:
+  frame_id: 4
+  parent: full_meal
+  salad: villager
+  extra_quantities: ~

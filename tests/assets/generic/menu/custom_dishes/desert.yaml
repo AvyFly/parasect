@@ -1,0 +1,8 @@
+common:
+  ingredients:
+    - [FLOUR, 2, ~]
+    - [EGG, 1, ~]
+    - [STRAWBERRY, 10, ~]
+  allergens:
+    substances:
+      - [PISTACHIO, ~, Mary is allergic to them]
