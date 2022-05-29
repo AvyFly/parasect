@@ -1,9 +1,14 @@
 common:
   ingredients:
     - [CUCUMBER, 2, ~]
-    - [TOMATO, 3, ~]
     - [OIL, 0.5, ~]
     - [SALT, 0.01, ~]
   allergens:
     substances:
       - [VINEGAR, ~, Mom doesn't like it]
+
+variants:
+  villager:
+    ingredients:
+      - [TOMATO, 3, ~]
+      - [WHITE_CHEESE, 0.5, ~]

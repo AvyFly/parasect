@@ -6,6 +6,8 @@ import math
 import os
 import pathlib
 import typing
+from abc import ABC
+from abc import abstractmethod
 from enum import Enum
 from typing import Any
 from typing import Dict
@@ -25,35 +27,33 @@ from pydantic import BaseModel
 from pydantic import root_validator
 
 
-class Borg:
-    """Borg helper class."""
-
-    _shared_state: Any = {}
-
-    def __init__(self) -> None:
-        """Class constructor."""
-        self.__dict__ = self._shared_state
+class Borg(ABC):
+    """Borg API class."""
 
     def clear(self) -> None:
-        """Clear the instance dictionary and start afresh."""
-        self._shared_state = {}
-        self._first_call = True
+        """Reset the extra class variables."""
+        self._shared_state.clear()
+
+    @property
+    @abstractmethod
+    def _shared_state(self):
+        pass
 
 
 class Logger(Borg):
     """Singleton to carry package-level settings."""
 
-    _debug: bool = False
-    _first_call: bool = True
+    _shared_state: Any = {}
+
     logger: logging.Logger
 
     def __init__(self, debug: bool = False) -> None:
         """Class constructor."""
-        Borg.__init__(self)
+        self.__dict__ = self._shared_state
 
-        if self._first_call:
+        if len(self._shared_state) == 0:
+            self._debug: bool = debug
             self.logger = setup_logger(debug)
-            self._first_call = False
 
 
 def setup_logger(debug: bool) -> logging.Logger:
@@ -92,12 +92,15 @@ def get_logger() -> logging.Logger:
 class ConfigPaths(Borg):
     """Helper class to construct the configurations and parameter filepaths."""
 
-    CUSTOM_PATH: Optional[str] = None
-    DEFAULT_PARAMS_PATH: Optional[str] = None
+    _shared_state: Any = {}
 
     def __init__(self) -> None:
         """Class constructor."""
-        Borg.__init__(self)
+        self.__dict__ = self._shared_state
+
+        if len(self._shared_state) == 0:
+            self.CUSTOM_PATH: Optional[str] = None
+            self.DEFAULT_PARAMS_PATH: Optional[str] = None
 
     @property
     def path(self) -> str:
@@ -120,7 +123,7 @@ class ConfigPaths(Borg):
         return self._get_staple_dishes_path()
 
     @property
-    def default_parameters(self) -> str:
+    def default_parameters(self) -> Optional[str]:
         """Return the path of the default parameters file."""
         return self._get_default_parameters_file()
 
@@ -159,7 +162,7 @@ class ConfigPaths(Borg):
     def _get_staple_dishes_path(self) -> str:
         return os.path.join(self.path, "staple_dishes")
 
-    def _get_default_parameters_file(self) -> str:
+    def _get_default_parameters_file(self) -> Optional[str]:
         filepath = None
         try:
             filepath = os.path.expanduser(os.environ["PARASECT_DEFAULTS"])
@@ -167,8 +170,6 @@ class ConfigPaths(Borg):
             get_logger().debug("Environment variable for parasect path not set")
         if self.DEFAULT_PARAMS_PATH:
             filepath = self.DEFAULT_PARAMS_PATH
-        if filepath is None:
-            raise RuntimeError("Default parameters path not specified.")
         get_logger().debug(f"Using {filepath} as global default parameter file")
         return filepath
 

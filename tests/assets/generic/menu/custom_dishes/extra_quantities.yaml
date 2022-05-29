@@ -1,0 +1,4 @@
+common:
+  ingredients:
+    - [BEEF, 5, ~]
+    - [POTATOES, 10, ~]

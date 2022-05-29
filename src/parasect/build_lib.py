@@ -248,7 +248,7 @@ class Meal:
     def __init__(
         self,
         meals_menu: MealMenuModel,
-        default_params_filepath: str,
+        default_params_filepath: Optional[str],
         configs_path: str,
         name: str = "Unknown",
     ):
@@ -278,7 +278,11 @@ class Meal:
             configs_path,
         )
 
-        self.load_base_parameters(default_params_filepath)
+        if default_params_filepath or self.parent:
+            self.load_base_parameters(default_params_filepath)
+        else:
+            self.param_list = ParameterList()
+            self.add_new = True
 
         self.parse_header_footer(meal_dict)
 
@@ -320,13 +324,13 @@ class Meal:
         # Add the AUTOSTART value for each configuration
         autostart = Parameter("SYS_AUTOSTART", self.frame_id)
         autostart.param_type = "INT32"
-        self.param_list.add_param(autostart, safe=True)
+        self.param_list.add_param(autostart, safe=(not self.add_new))
 
     def parse_parent(
         self,
         meal_dict: MealType,
         all_meals: MealMenuModel,
-        default_params_filepath: str,
+        default_params_filepath: Optional[str],
         configs_path: str,
     ) -> None:
         """Check if a parent key is passed and load its presets."""
@@ -359,14 +363,17 @@ class Meal:
                 raise TypeError("footer must be of type str or None.")
             self.footer = footer
 
-    def load_base_parameters(self, default_params_filepath: str) -> None:
+    def load_base_parameters(self, default_params_filepath: Optional[str]) -> None:
         """Load base parameter list."""
         if self.parent is not None:
             # If a parent is specified, load their parameters
             self.param_list = self.parent.param_list
         else:
             # Otherwise load defaults
-            self.param_list = read_params(default_params_filepath)
+            if default_params_filepath:
+                self.param_list = read_params(default_params_filepath)
+            else:
+                raise ValueError("Default parameters path not set.")
 
     def decide_on_calibration(self, meal_dict: MealType) -> None:
         """Check if calibration data is to be preserved."""
@@ -445,7 +452,7 @@ class Meal:
                 self.param_list.remove_param(param)
 
     def apply_edits(
-        self, edited_param_list: ParameterList, default_params_filepath: str
+        self, edited_param_list: ParameterList, default_params_filepath: Optional[str]
     ) -> None:
         """Edit custom parameters."""
         if not self.add_new:
@@ -456,26 +463,26 @@ class Meal:
                 )
                 self.param_list.add_param(parameter, safe=True)
         else:
-            # New parameters are expected to be added, that don't exist in the parent set
-            # This is expected to be used only with a valid parent
-            if self.parent is None:
-                raise RuntimeError(
-                    "Adding new parameters is not supported without specifying a parent recipe."
-                )
-            # First, verify that those parameters exist in the default file.
-            default_param_list = read_params(default_params_filepath)
+            # New parameters are expected to be added, that don't exist in the original set.
+
+            if default_params_filepath:
+                default_param_list = read_params(default_params_filepath)
+
             for param in edited_param_list:
-                if param.name not in default_param_list.keys():
-                    # If not, raise an error
-                    raise KeyError(
-                        f"Parameter {param} does not exist in base parameter set."
-                    )
-                else:
-                    # If yes, read their type and set it, because its type is not specified in the parent param list
-                    param.param_type = default_param_list[param.name].param_type
+                if default_params_filepath:
+                    # If there is a default parameter file, verify that those parameters exist in it.
+                    if param.name not in default_param_list.keys():
+                        # If not, raise an error
+                        raise KeyError(
+                            f"Parameter {param} does not exist in base parameter set."
+                        )
+                    else:
+                        # If yes, read their type and set it, because its type is not specified in the parent param list
+                        param.param_type = default_param_list[param.name].param_type
+
                 # Finally, add the new parameter in the parent set
                 get_logger().debug(
-                    f"Adding parameter {param} from vehicle edit list to parent set"
+                    f"Adding parameter {param} from vehicle edit list to initial set"
                 )
                 self.param_list.add_param(param, safe=False)
 
@@ -652,7 +659,7 @@ class Meal:
             raise ValueError(f"Output format {format} not supported.")
 
 
-def build_meals(names: Optional[List] = None) -> Dict[str, Meal]:
+def build_meals(names: Optional[List[str]] = None) -> Dict[str, Meal]:
     """Build the meal of the provided aircraft."""
     meals_menu = get_meals_menu(ConfigPaths().meals)
 
@@ -664,13 +671,13 @@ def build_meals(names: Optional[List] = None) -> Dict[str, Meal]:
 
     # Go over the selected configs
     meals_dict = dict()
-    for recipe_name in meals_to_parse:
-        if recipe_name not in meals_menu.keys():
-            raise KeyError(f"Recipes file does not contain: {recipe_name}")
+    for meal_name in meals_to_parse:
+        if meal_name not in meals_menu.keys():
+            raise KeyError(f"Meals Menu file does not contain: {meal_name}")
         default_params_filepath = ConfigPaths().default_parameters
         configs_path = ConfigPaths().path
-        meals_dict[recipe_name] = Meal(
-            meals_menu, default_params_filepath, configs_path, recipe_name
+        meals_dict[meal_name] = Meal(
+            meals_menu, default_params_filepath, configs_path, meal_name
         )
 
     return meals_dict

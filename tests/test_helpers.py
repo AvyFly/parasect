@@ -6,7 +6,7 @@ import pydantic
 import pytest
 
 from .utils import (  # noqa: F401 # setup_generic is used by pytest as string
-    setup_generic,
+    fixture_setup_generic,
 )
 from .utils import setup_logger  # noqa: F401 # setup_logger is an autouse fixture
 from .utils import setup_px4  # noqa: F401 # setup_px4 is used by pytest as string
@@ -41,6 +41,17 @@ class TestLogger:
         logger = _helpers.get_logger()
         logger.debug("new line")
         assert log_file.read_text() == "parasect - DEBUG - new line\n"
+
+    def test_clear(self, setup_generic):
+        """Test the clear() method."""
+        _ = _helpers.get_logger()
+        assert not _helpers.Logger()._debug
+        _helpers.Logger().clear()
+        _helpers.Logger(debug=True)
+        _ = _helpers.get_logger()
+        assert _helpers.Logger()._debug
+        _helpers.Logger().clear()
+        assert not _helpers.Logger()._debug
 
 
 @pytest.mark.usefixtures("setup_px4")
@@ -86,11 +97,10 @@ class TestConfigPathsPX4:
         assert _helpers.ConfigPaths().default_parameters == custom_path
 
     def test_no_parameters(self):
-        """Raise the correct error if no parameter defaults is set."""
+        """Ensure it is possbile not to have set any default parameters path."""
         del os.environ["PARASECT_DEFAULTS"]
         _helpers.ConfigPaths().DEFAULT_PARAMS_PATH = None
-        with pytest.raises(RuntimeError):
-            _helpers.ConfigPaths().default_parameters
+        assert _helpers.ConfigPaths().default_parameters is None
 
 
 @pytest.mark.usefixtures("setup_generic")
