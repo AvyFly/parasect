@@ -567,13 +567,13 @@ class Meal:
         common_text = boilerplate_model.common
         if common_text is not None:
             for row in common_text:
-                boilerplate += row
+                boilerplate += row + "\n"
 
         # Read text specific to the text_type
         format_text = boilerplate_model.formats[text_type].common
         if format_text is not None:
             for row in format_text:
-                boilerplate += row
+                boilerplate += row + "\n"
 
         # Read text specific to the meal
         if group_name is not None and boilerplate_model.formats[text_type].variants:
@@ -582,7 +582,7 @@ class Meal:
                 meal_text = variants[group_name].common
                 if meal_text is not None:
                     for row in meal_text:
-                        boilerplate += row
+                        boilerplate += row + "\n"
 
         return boilerplate
 
@@ -638,7 +638,7 @@ class Meal:
         for param_name in param_names:
             param_value = self.param_list[param_name].get_pretty_value()
 
-            yield f"{indentation}param set {param_name} {param_value}\n"
+            yield f"{indentation}param set-default {param_name} {param_value}\n"
 
         yield tail
 

@@ -7,7 +7,11 @@ from click.testing import CliRunner
 
 import parasect
 from . import utils
-from .utils import setup_paths  # noqa: F401 # Setup paths is an autouse fixture
+from .utils import (  # noqa: F401 # setup_generic is used by pytest as string
+    setup_generic,
+)
+from .utils import setup_logger  # noqa: F401 # setup_logger is an autouse fixture
+from .utils import setup_px4  # noqa: F401 # setup_px4 is used by pytest as string
 from parasect import __main__
 from parasect import _helpers
 
@@ -24,6 +28,7 @@ def test_main_succeeds(runner: CliRunner) -> None:
     assert result.exit_code == 0
 
 
+@pytest.mark.usefixtures("setup_px4")
 class TestLogging:
     """Test logging functionality."""
 
@@ -81,6 +86,7 @@ class TestCompare:
         assert len(result.output.splitlines()) == num_exp_lines
 
 
+@pytest.mark.usefixtures("setup_px4")
 class TestBuild:
     """Test the build command."""
 
@@ -94,9 +100,12 @@ class TestBuild:
                 default_params=utils.PX4_DEFAULT_PARAMS_XML,
                 output_folder="output_folder",
             )
-            log_path = path.join(os.getcwd(), "output_folder", "1_light_meal")
-            # assert False
-            assert os.path.isfile(log_path)
+            assert os.path.isfile(
+                path.join(os.getcwd(), "output_folder", "1_my_vtol_1")
+            )
+            assert os.path.isfile(
+                path.join(os.getcwd(), "output_folder", "2_my_vtol_2")
+            )
 
     def test_build(self, runner: CliRunner) -> None:
         """Make sure the full command works."""
@@ -115,5 +124,9 @@ class TestBuild:
                     utils.PX4_DEFAULT_PARAMS_XML,
                 ],
             )
-            log_path = path.join(os.getcwd(), "output_folder", "1_light_meal")
-            assert os.path.isfile(log_path)
+            assert os.path.isfile(
+                path.join(os.getcwd(), "output_folder", "1_my_vtol_1")
+            )
+            assert os.path.isfile(
+                path.join(os.getcwd(), "output_folder", "2_my_vtol_2")
+            )

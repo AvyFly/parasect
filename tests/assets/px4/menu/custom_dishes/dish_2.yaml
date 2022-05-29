@@ -1,8 +1,0 @@
-common:
-  ingredients:
-    - [SDLOG_PROFILE, 131, ~]
-  allergens:
-    groups:
-      - [Testing, ~, Not applicable to our configuration]
-    substances:
-      - [TC_A0_ID, ~, Not applicable to our configuration]

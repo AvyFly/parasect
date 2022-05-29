@@ -1,0 +1,9 @@
+common:
+  ingredients:
+    - [BEEF, 1, ~]
+    - [POTATOES, 2, ~]
+    - [THYME, 0.001, ~]
+    - [OIL, 0.01, ~]
+  allergens:
+    substances:
+      - [MUSHROOMS, ~, My stomach really can't handle them]
