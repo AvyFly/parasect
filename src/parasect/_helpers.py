@@ -4,9 +4,10 @@ import csv
 import logging
 import math
 import os
-from abc import ABC, abstractmethod
 import pathlib
 import typing
+from abc import ABC
+from abc import abstractmethod
 from enum import Enum
 from typing import Any
 from typing import Dict
@@ -29,9 +30,14 @@ from pydantic import root_validator
 class Borg(ABC):
     """Borg API class."""
 
-    def clear(self):
+    def clear(self) -> None:
         """Reset the extra class variables."""
         self._shared_state.clear()
+
+    @property
+    @abstractmethod
+    def _shared_state(self):
+        pass
 
 
 class Logger(Borg):

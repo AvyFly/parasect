@@ -45,15 +45,12 @@ class TestLogger:
     def test_clear(self, setup_generic):
         """Test the clear() method."""
         _ = _helpers.get_logger()
-        print(_helpers.Logger()._debug)
         assert not _helpers.Logger()._debug
         _helpers.Logger().clear()
         _helpers.Logger(debug=True)
         _ = _helpers.get_logger()
-        print(_helpers.Logger()._debug)
         assert _helpers.Logger()._debug
         _helpers.Logger().clear()
-        print(_helpers.Logger()._debug)
         assert not _helpers.Logger()._debug
 
 
