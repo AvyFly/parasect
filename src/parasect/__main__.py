@@ -5,10 +5,10 @@ from typing import Optional
 
 import click
 
-from ._helpers import Formats
-from ._helpers import Logger
-from .build import build_helper
-from .compare import compare_helper
+from parasect._helpers import Formats
+from parasect._helpers import Logger
+from parasect.build_lib import build_helper
+from parasect.compare_lib import compare_helper
 
 ##############
 # UI functions
@@ -115,7 +115,7 @@ cli.add_command(compare)
 cli.add_command(build)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     profile = False
     if profile:
         with cProfile.Profile() as pr:
