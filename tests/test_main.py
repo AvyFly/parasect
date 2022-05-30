@@ -7,9 +7,6 @@ from click.testing import CliRunner
 
 import parasect
 from . import utils
-from .utils import (  # noqa: F401 # setup_generic is used by pytest as string
-    fixture_setup_generic,
-)
 from .utils import setup_logger  # noqa: F401 # setup_logger is an autouse fixture
 from .utils import setup_px4  # noqa: F401 # setup_px4 is used by pytest as string
 from parasect import __main__

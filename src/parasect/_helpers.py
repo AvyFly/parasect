@@ -379,12 +379,12 @@ def get_meals_menu(filepath: str) -> MealMenuModel:
 ##################################
 
 
-def get_param_from_str(string: str, param_type: Union[str, int]) -> Union[int, float]:
+def cast_param_value(value: Any, param_type: Union[str, int]) -> Union[int, float]:
     """Convert a string to a parameter value of the given type."""
     if param_type == "INT32" or param_type == 6:
-        return int(string)
+        return int(value)
     elif param_type == "FLOAT" or param_type == 9:
-        return float(string)
+        return float(value)
     else:
         raise ValueError(f"Unhandled parameter type {param_type}")
 
@@ -445,15 +445,14 @@ class Parameter:
             zeros_post_decimal = math.floor(math.log(abs(self.value)) / math.log(0.1))
             digits = int(precision + zeros_post_decimal)
             digits = max(digits, 1)
-            string = f"{self.value:.{digits}f}"
+            string = f"{self.value:.{digits}f}"  # There will be at least one decimal place, because digits >= 1
 
             # Delete trailing decimal zeroes
-            if "." in string:
-                while string[-1] == "0":
-                    string = string[:-1]
-                # Make sure at least one decimal zero exists
-                if string[-1] == ".":
-                    string += "0"
+            while string[-1] == "0":
+                string = string[:-1]
+            # Make sure at least one decimal zero exists
+            if string[-1] == ".":
+                string += "0"
 
         get_logger().debug(
             f"Converted value of {self.name} from {self.value} to {string}"
@@ -528,19 +527,15 @@ class ParameterList:
         else:
             # Try to deduce parameter type
             if param.param_type is not None:
+                # If we know the new parameter type
                 new_value = param.value
             elif self.params[param.name].param_type is None:
+                # If we don't know the existing parameter type
                 new_value = param.value
             else:
+                # We know the target type, cast the new parameter value
                 param_type = self.params[param.name].param_type
-                if param_type == "INT32":
-                    new_value = int(param.value)
-                elif param_type == "FLOAT":
-                    new_value = float(param.value)
-                else:
-                    raise ValueError(
-                        f"Unsupported parameter type {param_type} for parameter {param.name}"
-                    )
+                new_value = cast_param_value(param.value, param_type)
             self.params[param.name].value = new_value
 
     def remove_param(self, param: Parameter, safe: bool = True) -> None:
@@ -561,7 +556,7 @@ def build_param_from_xml(parameter: XmlElement) -> Parameter:
     name = str(parameter.get("name"))
     default_value = str(parameter.get("default"))
     param_type = str(parameter.get("type"))
-    value = get_param_from_str(default_value, param_type)  # Assign the default value
+    value = cast_param_value(default_value, param_type)  # Assign the default value
     param = Parameter(name, value)
     param.default_value = value
     param.param_type = param_type
@@ -582,7 +577,7 @@ def build_param_from_qgc(row: List[str]) -> Parameter:
     else:
         raise ValueError(f"Unknown parameter type: {param_type_num}")
 
-    param_value = get_param_from_str(row[3], param_type)
+    param_value = cast_param_value(row[3], param_type)
 
     param = Parameter(param_name, param_value)
     param.param_type = param_type
