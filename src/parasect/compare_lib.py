@@ -1,4 +1,5 @@
 """Module providing the comparison of parameter sets."""
+from pathlib import Path
 import itertools as it
 from typing import Dict
 from typing import List
@@ -427,11 +428,11 @@ def compare_helper(
     get_logger().debug(f"Comparing {file_1} and {file_2} for component {component}")
 
     if input_folder:
-        ConfigPaths().CUSTOM_PATH = input_folder
+        ConfigPaths().CUSTOM_PATH = Path(input_folder)
         get_logger().debug(f"Setting CUSTOM_PATH to {ConfigPaths().path}")
 
-    param_list_1 = read_params(file_1)
-    param_list_2 = read_params(file_2)
+    param_list_1 = read_params(Path(file_1))
+    param_list_2 = read_params(Path(file_2))
     comparison_lists = get_vehicles_comparison(
         param_list_1, param_list_2, nocal, nouser, component
     )

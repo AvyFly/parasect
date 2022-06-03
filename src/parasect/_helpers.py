@@ -6,6 +6,7 @@ import math
 import os
 import pathlib
 import typing
+from pathlib import Path
 from abc import ABC
 from abc import abstractmethod
 from enum import Enum
@@ -99,39 +100,39 @@ class ConfigPaths(Borg):
         self.__dict__ = self._shared_state
 
         if len(self._shared_state) == 0:
-            self.CUSTOM_PATH: Optional[str] = None
-            self.DEFAULT_PARAMS_PATH: Optional[str] = None
+            self.CUSTOM_PATH: Optional[Path] = None
+            self.DEFAULT_PARAMS_PATH: Optional[Path] = None
 
     @property
-    def path(self) -> str:
+    def path(self) -> Path:
         """Get the path of the menu folder."""
         return self._get_path()
 
     @property
-    def meals(self) -> str:
+    def meals(self) -> Path:
         """Return the meals file path."""
         return self._get_meals_path()
 
     @property
-    def custom_dishes(self) -> str:
+    def custom_dishes(self) -> Path:
         """Get the path of the custom, user-defined dishes folder."""
         return self._get_custom_dishes_path()
 
     @property
-    def staple_dishes(self) -> str:
+    def staple_dishes(self) -> Path:
         """Return the path of the staple dishes folder."""
         return self._get_staple_dishes_path()
 
     @property
-    def default_parameters(self) -> Optional[str]:
+    def default_parameters(self) -> Optional[Path]:
         """Return the path of the default parameters file."""
         return self._get_default_parameters_file()
 
-    def _get_path(self) -> str:
+    def _get_path(self) -> Path:
         configs_path = None
         # First check if a specific CUSTOM_PATH has been defined.
         if self.CUSTOM_PATH:
-            if not os.path.isdir(self.CUSTOM_PATH):
+            if not Path(self.CUSTOM_PATH).is_dir():
                 raise NotADirectoryError(
                     "Given configuration path {self.CUSTOM_PATH} doesn't exist"
                 )
@@ -140,8 +141,8 @@ class ConfigPaths(Borg):
         if not configs_path:
             # If not, check if the environmental variable is set
             try:
-                configs_path = os.environ["PARASECT_PATH"]
-                if not pathlib.Path(configs_path).expanduser().is_dir():
+                configs_path = Path(os.environ["PARASECT_PATH"])
+                if not configs_path.expanduser().is_dir():
                     raise NotADirectoryError(
                         f"PARASECT_PATH points to invalid directory {configs_path}"
                     )
@@ -153,19 +154,22 @@ class ConfigPaths(Borg):
         get_logger().debug(f"Pointing configurations to {configs_path}")
         return configs_path
 
-    def _get_meals_path(self) -> str:
-        return os.path.join(self.path, "meals.yaml")
+    def _get_meals_path(self) -> Path:
+        path = self.path / "meals.yaml"  # type: Path
+        return path
 
-    def _get_custom_dishes_path(self) -> str:
-        return os.path.join(self.path, "custom_dishes")
+    def _get_custom_dishes_path(self) -> Path:
+        path = self.path / "custom_dishes"  # type: Path
+        return path
 
-    def _get_staple_dishes_path(self) -> str:
-        return os.path.join(self.path, "staple_dishes")
+    def _get_staple_dishes_path(self) -> Path:
+        path = self.path / "staple_dishes"  # type: Path
+        return path
 
-    def _get_default_parameters_file(self) -> Optional[str]:
+    def _get_default_parameters_file(self) -> Optional[Path]:
         filepath = None
         try:
-            filepath = os.path.expanduser(os.environ["PARASECT_DEFAULTS"])
+            filepath = Path(os.environ["PARASECT_DEFAULTS"]).expanduser()
         except KeyError:
             get_logger().debug("Environment variable for parasect path not set")
         if self.DEFAULT_PARAMS_PATH:
@@ -277,7 +281,7 @@ class MealMenuModel(BaseModel):
     @classmethod
     def _is_custom_dish(cls, dish_name: str) -> bool:
         filename = dish_name + ".yaml"
-        filepath = os.path.join(ConfigPaths().custom_dishes, filename)
+        filepath = ConfigPaths().custom_dishes / filename
         if os.path.isfile(filepath):
             return True
         else:
@@ -286,7 +290,7 @@ class MealMenuModel(BaseModel):
     @classmethod
     def _is_staple_dish(cls, dish_name: str) -> bool:
         filename = dish_name + ".yaml"
-        filepath = os.path.join(ConfigPaths().staple_dishes, filename)
+        filepath = ConfigPaths().staple_dishes / filename
         if os.path.isfile(filepath):
             return True
         else:
@@ -324,7 +328,7 @@ class UserDefinedModel(CalibrationModel):
     pass
 
 
-def _build_dict_from_yaml(filepath: str) -> Dict:
+def _build_dict_from_yaml(filepath: Path) -> Dict:
     """Read a .yaml file as a dictionary.
 
     Args:
@@ -338,7 +342,7 @@ def _build_dict_from_yaml(filepath: str) -> Dict:
     return model_dict
 
 
-def get_dish(path: str, dish_name: str) -> DishModel:
+def get_dish(path: Path, dish_name: str) -> DishModel:
     """Read a dish .yaml file.
 
     Args:
@@ -349,19 +353,19 @@ def get_dish(path: str, dish_name: str) -> DishModel:
     Returns:
         DishModel: A Pydantic model
     """
-    filepath = os.path.join(path, dish_name + ".yaml")
+    filepath = path / (dish_name + ".yaml")
     dictionary = _build_dict_from_yaml(filepath)
     return DishModel.parse_obj(dictionary)
 
 
-def get_boilerplate(path: str, dish_name: str) -> BoilerplateText:
+def get_boilerplate(path: Path, dish_name: str) -> BoilerplateText:
     """Read a boilerplate text model."""
-    filepath = os.path.join(path, dish_name + ".yaml")
+    filepath = path / (dish_name + ".yaml")
     dictionary = _build_dict_from_yaml(filepath)
     return BoilerplateText.parse_obj(dictionary)
 
 
-def get_meals_menu(filepath: str) -> MealMenuModel:
+def get_meals_menu(filepath: Path) -> MealMenuModel:
     """Read a meals menu .yaml file.
 
     Args:
@@ -379,14 +383,16 @@ def get_meals_menu(filepath: str) -> MealMenuModel:
 ##################################
 
 
-def cast_param_value(value: Any, param_type: Union[str, int]) -> Union[int, float]:
+def cast_param_value(value: Any, param_type: Optional[str]) -> Union[int, float]:
     """Convert a string to a parameter value of the given type."""
-    if param_type == "INT32" or param_type == 6:
+    if param_type is None:
+        raise TypeError("Unknown type to cast value to.")
+    elif param_type == "INT32":
         return int(value)
-    elif param_type == "FLOAT" or param_type == 9:
+    elif param_type == "FLOAT":
         return float(value)
     else:
-        raise ValueError(f"Unhandled parameter type {param_type}")
+        raise TypeError(f"Unhandled parameter type {param_type}")
 
 
 class Parameter:
@@ -632,7 +638,7 @@ def get_group_params_xml(group: XmlElement) -> Generator[XmlElement, None, None]
     yield from group.findall("parameter")
 
 
-def read_params_xml(filepath: str) -> ParameterList:
+def read_params_xml(filepath: Path) -> ParameterList:
     """Read and parse an PX4-style XML parameter list."""
     tree = eTree.parse(filepath)
     root = tree.getroot()
@@ -656,13 +662,13 @@ def read_params_xml(filepath: str) -> ParameterList:
     return param_list
 
 
-def read_params_qgc(filepath: str) -> ParameterList:
+def read_params_qgc(filepath: Path) -> ParameterList:
     """Read and parse a QGC/AMC/Auterion Suite parameters file."""
     param_list = ParameterList()
 
     with open(filepath) as csvfile:
         param_reader = csv.reader(csvfile, delimiter="\t")
-        for param_row in param_reader:
+        for param_row in param_reader:  # pragma: no branch
             get_logger().debug(f"Examining line: {param_row}")
             if len(param_row) == 0:  # Skip empty lines
                 continue
@@ -683,13 +689,13 @@ def read_params_qgc(filepath: str) -> ParameterList:
     return param_list
 
 
-def read_params_ulog_param(filepath: str) -> ParameterList:
+def read_params_ulog_param(filepath: Path) -> ParameterList:
     """Read and parse the outputs of the ulog_params program."""
     param_list = ParameterList()
 
     with open(filepath) as csvfile:
         param_reader = csv.reader(csvfile, delimiter=",")
-        for param_row in param_reader:
+        for param_row in param_reader:  # pragma: no branch
             # Check if line has exactly two elements
             if len(param_row) != 2:
                 raise SyntaxError(
@@ -707,7 +713,7 @@ def read_params_ulog_param(filepath: str) -> ParameterList:
     return param_list
 
 
-def read_params(filepath: str) -> ParameterList:
+def read_params(filepath: Path) -> ParameterList:
     """Universal parameter reader."""
     get_logger().debug(f"Attempting to read file {filepath}")
     protocols_recognized = 0

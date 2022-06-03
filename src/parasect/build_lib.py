@@ -1,5 +1,6 @@
 """Module providing the generation of parameter sets."""
 import os
+from pathlib import Path
 from typing import Dict
 from typing import Generator
 from typing import Iterable
@@ -214,7 +215,7 @@ class Dish:
 class Calibration(Dish):
     """Parameter class holding calibration parameters."""
 
-    def __init__(self, path: str, frame: str = "all"):
+    def __init__(self, path: Path, frame: str = "all"):
         """Class constructor."""
         param_dict = get_dish(ConfigPaths().staple_dishes, "calibration")
         super().__init__(param_dict, model=frame)
@@ -223,7 +224,7 @@ class Calibration(Dish):
 class UserDefined(Dish):
     """Parameter class holding operator-defined parameters."""
 
-    def __init__(self, path: str, frame: str = "all"):
+    def __init__(self, path: Path, frame: str = "all"):
         """Class constructor."""
         param_dict = get_dish(ConfigPaths().staple_dishes, "operator")
         super().__init__(param_dict)
@@ -248,8 +249,8 @@ class Meal:
     def __init__(
         self,
         meals_menu: MealMenuModel,
-        default_params_filepath: Optional[str],
-        configs_path: str,
+        default_params_filepath: Optional[Path],
+        configs_path: Path,
         name: str = "Unknown",
     ):
         """Class constructor."""
@@ -330,8 +331,8 @@ class Meal:
         self,
         meal_dict: MealType,
         all_meals: MealMenuModel,
-        default_params_filepath: Optional[str],
-        configs_path: str,
+        default_params_filepath: Optional[Path],
+        configs_path: Path,
     ) -> None:
         """Check if a parent key is passed and load its presets."""
         if "parent" in meal_dict.keys():
@@ -363,7 +364,7 @@ class Meal:
                 raise TypeError("footer must be of type str or None.")
             self.footer = footer
 
-    def load_base_parameters(self, default_params_filepath: Optional[str]) -> None:
+    def load_base_parameters(self, default_params_filepath: Optional[Path]) -> None:
         """Load base parameter list."""
         if self.parent is not None:
             # If a parent is specified, load their parameters
@@ -452,7 +453,9 @@ class Meal:
                 self.param_list.remove_param(param)
 
     def apply_edits(
-        self, edited_param_list: ParameterList, default_params_filepath: Optional[str]
+        self,
+        edited_param_list: ParameterList,
+        default_params_filepath: Optional[Path],
     ) -> None:
         """Edit custom parameters."""
         if not self.add_new:
@@ -718,11 +721,11 @@ def build_helper(
         meal_list = None
 
     if input_folder:
-        ConfigPaths().CUSTOM_PATH = input_folder
+        ConfigPaths().CUSTOM_PATH = Path(input_folder)
         get_logger().debug(f"Setting CUSTOM_PATH to {ConfigPaths().custom_dishes}")
 
     if default_params:
-        ConfigPaths().DEFAULT_PARAMS_PATH = default_params
+        ConfigPaths().DEFAULT_PARAMS_PATH = Path(default_params)
         get_logger().debug(
             f"Setting DEFAULT_PARAMS_OVERRIDE to {ConfigPaths().default_parameters}"
         )
@@ -733,9 +736,14 @@ def build_helper(
     meals_dict = build_meals(meal_list)
 
     # Write output files in selected output
+    output_folder_path: Optional[Path]
+    if output_folder:
+        output_folder_path = Path(output_folder)
+    else:
+        output_folder_path = None
     if meal_list is None:
         # Export all meals
-        if output_folder is None:
+        if output_folder_path is None:
             raise ValueError(
                 "You must specify an output folder for the meals parameters, see build command help"
             )
@@ -746,18 +754,18 @@ def build_helper(
             if (not sitl) and meal.is_sitl:
                 continue
 
-            export_meal(meal, format, output_folder)
+            export_meal(meal, format, output_folder_path)
     else:
         # Export only a single config
         meal = meals_dict[meal_list[0]]
-        export_meal(meal, format, output_folder)
+        export_meal(meal, format, output_folder_path)
 
 
-def make_folder(folder_path: str) -> None:
+def make_folder(folder_path: Path) -> None:
     """Create folder."""
     if not os.path.isabs(folder_path):
-        folder_path = os.path.join(os.getcwd(), folder_path)
-    folder_path = os.path.expanduser(folder_path)
+        folder_path = Path.cwd() / folder_path
+    folder_path = folder_path.expanduser()
 
     if not os.path.exists(folder_path):
         try:
@@ -766,13 +774,13 @@ def make_folder(folder_path: str) -> None:
             print("Failed to create folder")
 
 
-def export_meal(config: Meal, format: Formats, output_path: Optional[str]) -> None:
+def export_meal(config: Meal, format: Formats, output_path: Optional[Path]) -> None:
     """Export a configuration to a folder or the screen."""
     if output_path is not None:
         make_folder(output_path)
         filename = build_filename(format, config)
 
-        with open(os.path.join(output_path, filename), "w") as fd:
+        with open(output_path / filename, "w") as fd:
             for row in config.export(format):
                 fd.write(row)
     else:
