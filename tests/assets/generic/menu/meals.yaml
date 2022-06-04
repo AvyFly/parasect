@@ -1,14 +1,20 @@
+snack:
+  frame_id: 1
+  fruit: single
+
 light_meal:
   frame_id: 1
   salad: ~
   meat_and_potatoes: ~
+  remove_calibration: True
   header: ~
   footer: ~
 
 spicy_meal:
   frame_id: 2
   salad: ~
-  meat_and_potatoes: spicy
+  meat_and_potatoes: spicy/extra
+  remove_calibration: True
   header: ~
   footer: ~
 
@@ -16,12 +22,14 @@ full_meal:
   frame_id: 3
   salad: ~
   meat_and_potatoes: ~
+  bread: baguette
   desert: ~
+  remove_calibration: True
   header: ~
   footer: ~
 
 christmass_at_grandmas:
   frame_id: 4
   parent: full_meal
-  salad: villager
+  salad: village
   extra_quantities: ~

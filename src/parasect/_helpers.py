@@ -4,7 +4,6 @@ import csv
 import logging
 import math
 import os
-import pathlib
 import typing
 from pathlib import Path
 from abc import ABC
@@ -26,6 +25,7 @@ import yaml  # type: ignore
 from defusedxml import ElementTree as eTree  # type: ignore
 from pydantic import BaseModel
 from pydantic import root_validator
+from pydantic import StrictBool
 
 
 class Borg(ABC):
@@ -190,7 +190,9 @@ class Formats(Enum):
     px4af = "px4af"
 
 
-ReservedOptions = Literal["frame_id", "sitl", "parent"]
+ReservedOptions = Literal[
+    "frame_id", "sitl", "parent", "remove_calibration", "remove_operator"
+]
 ReservedOptionsSequence = typing.get_args(ReservedOptions)
 
 StapleDishesNames = Literal["calibration", "user_defined", "header", "footer"]
@@ -210,28 +212,28 @@ class Substances(BaseModel):
         return iter(self.__root__)
 
 
-class Allergens(BaseModel):
+class Allergens(BaseModel, extra="forbid"):
     """Contains lists of parameters that are to be removed."""
 
     substances: Optional[Substances]
     groups: Optional[Substances]
 
 
-class Recipe(BaseModel):
+class Recipe(BaseModel, extra="forbid"):
     """A set of ingredients and allergens."""
 
     ingredients: Optional[Substances]
     allergens: Optional[Allergens]
 
 
-class DishModel(BaseModel):
+class DishModel(BaseModel, extra="forbid"):
     """A complete dish."""
 
     common: Optional[Recipe]
     variants: Optional[Dict[str, "DishModel"]]
 
 
-class FormatText(BaseModel):
+class FormatText(BaseModel, extra="forbid"):
     """Boilerplate text for export formats."""
 
     common: Optional[List[str]]
@@ -251,7 +253,7 @@ class BoilerplateText(BaseModel):
     formats: Dict[str, FormatText]
 
 
-MealType = Dict[str, Optional[Union[int, str]]]
+MealType = Dict[str, Optional[Union[StrictBool, int, str]]]
 MealsType = Dict[str, MealType]
 
 DishModel.update_forward_refs()

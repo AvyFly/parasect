@@ -164,13 +164,13 @@ class TestParameterList:
         spicy_meal = generic_meals["spicy_meal"]
         light_meal = generic_meals["light_meal"]
         params_diff = spicy_meal.param_list - light_meal.param_list
-        assert list(params_diff.keys()) == ["CHILLI"]
+        assert list(params_diff.keys()) == ["CHILLI", "JALLAPENOS"]
 
     def test_str(self, generic_meals):
         """Test the __str__ operation."""
         light_meal = generic_meals["light_meal"]
         s = light_meal.__str__()
-        assert s.count("\n") == 6
+        assert s.count("\n") == 5
         assert s[0:4] == "BEEF"
 
     def test_add_illegal(self, generic_meals):

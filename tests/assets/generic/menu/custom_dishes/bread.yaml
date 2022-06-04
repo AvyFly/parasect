@@ -1,0 +1,5 @@
+variants:
+  baguette:
+    common:
+      ingredients:
+        - [BAGUETTE, 1, ~]

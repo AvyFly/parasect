@@ -1,0 +1,5 @@
+variants:
+  single:
+    common:
+      ingredients:
+        - [APPLE, 1, ~]

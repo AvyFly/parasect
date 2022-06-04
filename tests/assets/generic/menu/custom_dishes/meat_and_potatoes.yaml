@@ -12,3 +12,8 @@ variants:
     common:
       ingredients:
         - [CHILLI, 1, ~]
+    variants:
+      extra:
+        common:
+          ingredients:
+            - [JALLAPENOS, 2, ~]

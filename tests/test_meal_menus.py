@@ -16,7 +16,7 @@ def generic_meals():
 
 
 @pytest.mark.usefixtures("setup_generic")
-class TestGenericLightMeals:
+class TestGenericMeals:
     """Test that all Generic meals have generated correctly."""
 
     def test_light_meal(self, generic_meals):

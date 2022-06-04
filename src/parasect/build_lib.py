@@ -80,29 +80,21 @@ class Dish:
         sn: Optional[str] = None,
     ) -> None:
         """Read the model and sn information from the param_dict."""
-        # Select which models to choose
-        model_list: Iterable
-        if model == "all":
-            if dish_model.variants:
-                model_list = dish_model.variants.keys()
-            else:
-                return
-        else:
-            model_list = [model]
         # Iterate over all selected models
         # TODO: Make this recursive for variants(models/sns/etc)
-        for cur_model in model_list:
-            variant_model = self.get_variant(dish_model, cur_model)
-            if variant_model is not None:
-                # Load common parameters for all SNs of the same model
-                common_recipe = variant_model.common
-                if common_recipe is not None:
-                    get_logger().debug(f"Parsing {cur_model} common parameters")
-                    self.parse_recipe(common_recipe)
-                    # Load serial number parameters
-                    if sn is not None:
-                        sn_recipe = self.get_sn_recipe(cur_model, variant_model, sn)
-                        self.parse_recipe(sn_recipe)
+        variant_model = self.get_variant(dish_model, model)
+        if variant_model is not None:
+            # Load common parameters for all SNs of the same model
+            common_recipe = variant_model.common
+            if common_recipe is not None:
+                get_logger().debug(f"Parsing {model} common parameters")
+                self.parse_recipe(common_recipe)
+                # Load serial number parameters
+                if sn is not None:
+                    sn_recipe = self.get_sn_recipe(model, variant_model, sn)
+                    self.parse_recipe(sn_recipe)
+        else:
+            pass
 
     def get_variant(
         self, dish_model: DishModel, variant_name: str
@@ -215,7 +207,7 @@ class Dish:
 class Calibration(Dish):
     """Parameter class holding calibration parameters."""
 
-    def __init__(self, path: Path, frame: str = "all"):
+    def __init__(self, path: Path, frame: str = None):
         """Class constructor."""
         param_dict = get_dish(ConfigPaths().staple_dishes, "calibration")
         super().__init__(param_dict, model=frame)
@@ -224,7 +216,7 @@ class Calibration(Dish):
 class UserDefined(Dish):
     """Parameter class holding operator-defined parameters."""
 
-    def __init__(self, path: Path, frame: str = "all"):
+    def __init__(self, path: Path, frame: str = None):
         """Class constructor."""
         param_dict = get_dish(ConfigPaths().staple_dishes, "operator")
         super().__init__(param_dict)
@@ -241,8 +233,8 @@ class Meal:
     footer: Optional[str] = None
     parent: Optional["Meal"] = None
     add_new = False
-    remove_calibration_flag = True
-    remove_userdata_flag = True
+    remove_calibration_flag = False
+    remove_operator_flag = False
     param_list: ParameterList
     custom_dishes_names = None
 
@@ -279,10 +271,16 @@ class Meal:
             configs_path,
         )
 
+        # Set the base parameters
         if default_params_filepath or self.parent:
             self.load_base_parameters(default_params_filepath)
         else:
             self.param_list = ParameterList()
+
+        # Decide if new paramteres are allowed in this Meal
+        if default_params_filepath:
+            self.add_new = False
+        else:
             self.add_new = True
 
         self.parse_header_footer(meal_dict)
@@ -301,7 +299,7 @@ class Meal:
 
         self.decide_on_calibration(meal_dict)
 
-        self.decide_on_userdata(meal_dict)
+        self.decide_on_operator(meal_dict)
 
         # Read configuration specific modules
         dishes_dict = self.collect_dishes(meal_dict)  # type: Dict[str, Dish]
@@ -313,14 +311,14 @@ class Meal:
             black_group_list,
         ) = self.collect_parameter_lists(dishes_dict)
 
+        self.apply_edits(edited_param_list, default_params_filepath)
+
         # Remove blacklist parameters
         self.remove_blacklist(black_param_list, black_group_list)
 
         self.remove_calibration()
 
-        self.remove_userdata()
-
-        self.apply_edits(edited_param_list, default_params_filepath)
+        self.remove_operator()
 
         # Add the AUTOSTART value for each configuration
         autostart = Parameter("SYS_AUTOSTART", self.frame_id)
@@ -387,16 +385,16 @@ class Meal:
             # We assume that the parent has already removed calibration
             self.remove_calibration_flag = False
 
-    def decide_on_userdata(self, meal_dict: MealType) -> None:
+    def decide_on_operator(self, meal_dict: MealType) -> None:
         """Check if user data is to be preserved."""
-        if "remove_userdata" in meal_dict.keys():
-            if isinstance(meal_dict["remove_userdata"], bool):
-                self.remove_userdata_flag = meal_dict["remove_userdata"]
+        if "remove_operator" in meal_dict.keys():
+            if isinstance(meal_dict["remove_operator"], bool):
+                self.remove_operator_flag = meal_dict["remove_operator"]
             else:
-                raise TypeError("remove_userdata flag is not a boolean")
+                raise TypeError("remove_operator flag is not a boolean")
         elif self.parent is not None:
             # We assume that the parent has already removed user data
-            self.remove_userdata_flag = False
+            self.remove_operator_flag = False
 
     def collect_parameter_lists(
         self, modules_dict: Dict[str, Dish]
@@ -443,9 +441,9 @@ class Meal:
             for param in calibration_params:
                 self.param_list.remove_param(param)
 
-    def remove_userdata(self) -> None:
+    def remove_operator(self) -> None:
         """Remove user data from the recipe."""
-        if self.remove_userdata_flag:
+        if self.remove_operator_flag:
             get_logger().debug(f"Removing user data for {self.name}")
             # Remove user-defined values
             user_params = UserDefined(ConfigPaths().staple_dishes)
@@ -666,13 +664,13 @@ def build_meals(names: Optional[List[str]] = None) -> Dict[str, Meal]:
     """Build the meal of the provided aircraft."""
     meals_menu = get_meals_menu(ConfigPaths().meals)
 
-    # Pick configuration if specified
+    # Pick meal if specified
     if names is not None:
         meals_to_parse = names
     else:
         meals_to_parse = list(meals_menu.keys())
 
-    # Go over the selected configs
+    # Go over the selected meals
     meals_dict = dict()
     for meal_name in meals_to_parse:
         if meal_name not in meals_menu.keys():
