@@ -8,7 +8,8 @@ common:
       - [VINEGAR, ~, Mom doesn't like it]
 
 variants:
-  villager:
-    ingredients:
-      - [TOMATO, 3, ~]
-      - [WHITE_CHEESE, 0.5, ~]
+  village:
+    common:
+      ingredients:
+        - [TOMATO, 3, ~]
+        - [WHITE_CHEESE, 0.5, ~]

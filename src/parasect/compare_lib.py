@@ -1,5 +1,6 @@
 """Module providing the comparison of parameter sets."""
 import itertools as it
+from pathlib import Path
 from typing import Dict
 from typing import List
 from typing import Optional
@@ -11,9 +12,9 @@ from ._helpers import ConfigPaths
 from ._helpers import get_logger
 from ._helpers import read_params
 from .build_lib import Calibration
+from .build_lib import Operator
 from .build_lib import Parameter
 from .build_lib import ParameterList
-from .build_lib import UserDefined
 
 
 PARAM_EPS_PCT = 0.006  # This value allow a displayed precision of 3 digits
@@ -36,18 +37,15 @@ def get_vehicles_comparison(
     # Collect vehicle IDs and component IDsDishModel
     id_dict = collect_vid_cid(param_list_1, param_list_2)
 
-    if nocal or nouser:
-        param_path = ConfigPaths().custom_dishes
-
     # Remove calibration parameters from both lists
     if nocal:
-        param_list_1 -= Calibration(param_path).param_list
-        param_list_2 -= Calibration(param_path).param_list
+        param_list_1 -= Calibration().param_list
+        param_list_2 -= Calibration().param_list
 
     # Remove user parameters from both lists
     if nouser:
-        param_list_1 -= UserDefined(param_path).param_list
-        param_list_2 -= UserDefined(param_path).param_list
+        param_list_1 -= Operator().param_list
+        param_list_2 -= Operator().param_list
 
     # Generate comparison results
     comparison_results = list()
@@ -427,11 +425,11 @@ def compare_helper(
     get_logger().debug(f"Comparing {file_1} and {file_2} for component {component}")
 
     if input_folder:
-        ConfigPaths().CUSTOM_PATH = input_folder
+        ConfigPaths().CUSTOM_PATH = Path(input_folder)
         get_logger().debug(f"Setting CUSTOM_PATH to {ConfigPaths().path}")
 
-    param_list_1 = read_params(file_1)
-    param_list_2 = read_params(file_2)
+    param_list_1 = read_params(Path(file_1))
+    param_list_2 = read_params(Path(file_2))
     comparison_lists = get_vehicles_comparison(
         param_list_1, param_list_2, nocal, nouser, component
     )

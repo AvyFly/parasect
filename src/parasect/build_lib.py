@@ -1,5 +1,6 @@
 """Module providing the generation of parameter sets."""
 import os
+from pathlib import Path
 from typing import Dict
 from typing import Generator
 from typing import Iterable
@@ -79,29 +80,21 @@ class Dish:
         sn: Optional[str] = None,
     ) -> None:
         """Read the model and sn information from the param_dict."""
-        # Select which models to choose
-        model_list: Iterable
-        if model == "all":
-            if dish_model.variants:
-                model_list = dish_model.variants.keys()
-            else:
-                return
-        else:
-            model_list = [model]
         # Iterate over all selected models
         # TODO: Make this recursive for variants(models/sns/etc)
-        for cur_model in model_list:
-            variant_model = self.get_variant(dish_model, cur_model)
-            if variant_model is not None:
-                # Load common parameters for all SNs of the same model
-                common_recipe = variant_model.common
-                if common_recipe is not None:
-                    get_logger().debug(f"Parsing {cur_model} common parameters")
-                    self.parse_recipe(common_recipe)
-                    # Load serial number parameters
-                    if sn is not None:
-                        sn_recipe = self.get_sn_recipe(cur_model, variant_model, sn)
-                        self.parse_recipe(sn_recipe)
+        variant_model = self.get_variant(dish_model, model)
+        if variant_model is not None:
+            # Load common parameters for all SNs of the same model
+            common_recipe = variant_model.common
+            if common_recipe is not None:
+                get_logger().debug(f"Parsing {model} common parameters")
+                self.parse_recipe(common_recipe)
+                # Load serial number parameters
+                if sn is not None:
+                    sn_recipe = self.get_sn_recipe(model, variant_model, sn)
+                    self.parse_recipe(sn_recipe)
+        else:
+            pass
 
     def get_variant(
         self, dish_model: DishModel, variant_name: str
@@ -214,23 +207,23 @@ class Dish:
 class Calibration(Dish):
     """Parameter class holding calibration parameters."""
 
-    def __init__(self, path: str, frame: str = "all"):
+    def __init__(self, frame: Optional[str] = None):
         """Class constructor."""
         param_dict = get_dish(ConfigPaths().staple_dishes, "calibration")
         super().__init__(param_dict, model=frame)
 
 
-class UserDefined(Dish):
+class Operator(Dish):
     """Parameter class holding operator-defined parameters."""
 
-    def __init__(self, path: str, frame: str = "all"):
+    def __init__(self, frame: Optional[str] = None):
         """Class constructor."""
         param_dict = get_dish(ConfigPaths().staple_dishes, "operator")
         super().__init__(param_dict)
 
 
 class Meal:
-    """An order able to build the full parameter list of an aircraft."""
+    """An order able to build the full parameter list of a vehicle."""
 
     name = ""
     frame_id: int
@@ -240,16 +233,16 @@ class Meal:
     footer: Optional[str] = None
     parent: Optional["Meal"] = None
     add_new = False
-    remove_calibration_flag = True
-    remove_userdata_flag = True
+    remove_calibration_flag = False
+    remove_operator_flag = False
     param_list: ParameterList
     custom_dishes_names = None
 
     def __init__(
         self,
         meals_menu: MealMenuModel,
-        default_params_filepath: Optional[str],
-        configs_path: str,
+        default_params_filepath: Optional[Path],
+        configs_path: Path,
         name: str = "Unknown",
     ):
         """Class constructor."""
@@ -278,10 +271,16 @@ class Meal:
             configs_path,
         )
 
+        # Set the base parameters
         if default_params_filepath or self.parent:
             self.load_base_parameters(default_params_filepath)
         else:
             self.param_list = ParameterList()
+
+        # Decide if new parameters are allowed in this Meal
+        if default_params_filepath or self.parent:
+            self.add_new = False
+        else:
             self.add_new = True
 
         self.parse_header_footer(meal_dict)
@@ -294,13 +293,13 @@ class Meal:
         if "hil" in meal_dict.keys():
             self.is_hil = meal_dict["hil"]
 
-        # Check if it is allowed to add new (non-existing in the parent recipe) parameters
+        # Check if it is explicitly allowed to add new (non-existing in the parent recipe) parameters
         if "add_new" in meal_dict.keys():
             self.add_new = meal_dict["add_new"]
 
         self.decide_on_calibration(meal_dict)
 
-        self.decide_on_userdata(meal_dict)
+        self.decide_on_operator(meal_dict)
 
         # Read configuration specific modules
         dishes_dict = self.collect_dishes(meal_dict)  # type: Dict[str, Dish]
@@ -312,14 +311,14 @@ class Meal:
             black_group_list,
         ) = self.collect_parameter_lists(dishes_dict)
 
+        self.apply_edits(edited_param_list, default_params_filepath)
+
         # Remove blacklist parameters
         self.remove_blacklist(black_param_list, black_group_list)
 
         self.remove_calibration()
 
-        self.remove_userdata()
-
-        self.apply_edits(edited_param_list, default_params_filepath)
+        self.remove_operator()
 
         # Add the AUTOSTART value for each configuration
         autostart = Parameter("SYS_AUTOSTART", self.frame_id)
@@ -330,8 +329,8 @@ class Meal:
         self,
         meal_dict: MealType,
         all_meals: MealMenuModel,
-        default_params_filepath: Optional[str],
-        configs_path: str,
+        default_params_filepath: Optional[Path],
+        configs_path: Path,
     ) -> None:
         """Check if a parent key is passed and load its presets."""
         if "parent" in meal_dict.keys():
@@ -342,7 +341,9 @@ class Meal:
                     all_meals, default_params_filepath, configs_path, parent_name
                 )
             else:
-                raise TypeError(f"Tried to parse parent with name {parent_name}")
+                raise TypeError(
+                    f"Tried to parse invalid parent with value {parent_name}"
+                )
 
     def parse_header_footer(self, meal_dict: MealType) -> None:
         """Store the desired header and footer files."""
@@ -363,7 +364,7 @@ class Meal:
                 raise TypeError("footer must be of type str or None.")
             self.footer = footer
 
-    def load_base_parameters(self, default_params_filepath: Optional[str]) -> None:
+    def load_base_parameters(self, default_params_filepath: Optional[Path]) -> None:
         """Load base parameter list."""
         if self.parent is not None:
             # If a parent is specified, load their parameters
@@ -386,16 +387,16 @@ class Meal:
             # We assume that the parent has already removed calibration
             self.remove_calibration_flag = False
 
-    def decide_on_userdata(self, meal_dict: MealType) -> None:
+    def decide_on_operator(self, meal_dict: MealType) -> None:
         """Check if user data is to be preserved."""
-        if "remove_userdata" in meal_dict.keys():
-            if isinstance(meal_dict["remove_userdata"], bool):
-                self.remove_userdata_flag = meal_dict["remove_userdata"]
+        if "remove_operator" in meal_dict.keys():
+            if isinstance(meal_dict["remove_operator"], bool):
+                self.remove_operator_flag = meal_dict["remove_operator"]
             else:
-                raise TypeError("remove_userdata flag is not a boolean")
+                raise TypeError("remove_operator flag is not a boolean")
         elif self.parent is not None:
             # We assume that the parent has already removed user data
-            self.remove_userdata_flag = False
+            self.remove_operator_flag = False
 
     def collect_parameter_lists(
         self, modules_dict: Dict[str, Dish]
@@ -438,21 +439,23 @@ class Meal:
         if self.remove_calibration_flag:
             get_logger().debug(f"Removing calibration for {self.name}")
             # Remove calibration values (need to keep their list up-to-date)
-            calibration_params = Calibration(ConfigPaths().staple_dishes)
+            calibration_params = Calibration()
             for param in calibration_params:
                 self.param_list.remove_param(param)
 
-    def remove_userdata(self) -> None:
+    def remove_operator(self) -> None:
         """Remove user data from the recipe."""
-        if self.remove_userdata_flag:
+        if self.remove_operator_flag:
             get_logger().debug(f"Removing user data for {self.name}")
             # Remove user-defined values
-            user_params = UserDefined(ConfigPaths().staple_dishes)
+            user_params = Operator()
             for param in user_params:
                 self.param_list.remove_param(param)
 
     def apply_edits(
-        self, edited_param_list: ParameterList, default_params_filepath: Optional[str]
+        self,
+        edited_param_list: ParameterList,
+        default_params_filepath: Optional[Path],
     ) -> None:
         """Edit custom parameters."""
         if not self.add_new:
@@ -474,7 +477,7 @@ class Meal:
                     if param.name not in default_param_list.keys():
                         # If not, raise an error
                         raise KeyError(
-                            f"Parameter {param} does not exist in base parameter set."
+                            f"Parameter {param} does not exist in default parameter set."
                         )
                     else:
                         # If yes, read their type and set it, because its type is not specified in the parent param list
@@ -559,39 +562,36 @@ class Meal:
 
     #     return new_dict
 
-    def read_header_footer(
+    def build_header_footer(
         self,
         boilerplate_model: BoilerplateText,
-        group_name: Optional[str],
+        variant_name: Optional[str],
         text_type: str,
-    ) -> str:
+    ) -> Generator[str, None, None]:
         """Grab the header and footer sections from the corresponding dish."""
         # Load common list
         get_logger().debug("Parsing common parameters")
 
-        boilerplate = ""
         # Read text common across text_types
         common_text = boilerplate_model.common
         if common_text is not None:
             for row in common_text:
-                boilerplate += row + "\n"
+                yield row + "\n"
 
         # Read text specific to the text_type
         format_text = boilerplate_model.formats[text_type].common
         if format_text is not None:
             for row in format_text:
-                boilerplate += row + "\n"
+                yield row + "\n"
 
         # Read text specific to the meal
-        if group_name is not None and boilerplate_model.formats[text_type].variants:
+        if variant_name is not None:
             variants = boilerplate_model.formats[text_type].variants
             if variants is not None:
-                meal_text = variants[group_name].common
+                meal_text = variants[variant_name].common
                 if meal_text is not None:
                     for row in meal_text:
-                        boilerplate += row + "\n"
-
-        return boilerplate
+                        yield row + "\n"
 
     def __str__(self):
         """__str__ dunder method."""
@@ -602,8 +602,7 @@ class Meal:
         # Read header
         get_logger().debug("Loading parameter header")
         header_model = get_boilerplate(ConfigPaths().staple_dishes, "header")
-        header = self.read_header_footer(header_model, self.header, "px4")
-        yield header
+        yield from self.build_header_footer(header_model, self.header, "px4")
 
         param_names = sorted(self.param_list.keys())
         for param_name in param_names:
@@ -627,19 +626,12 @@ class Meal:
         # Read header
         get_logger().debug("Loading parameter header.")
         header_dish = get_boilerplate(ConfigPaths().staple_dishes, "header")
-        header = self.read_header_footer(header_dish, self.header, "px4af")
-
-        # Read footer
-        get_logger().debug("Loading parameter footer.")
-        footer_dict = get_boilerplate(ConfigPaths().staple_dishes, "footer")
-        tail = self.read_header_footer(footer_dict, self.footer, "px4af")
+        yield from self.build_header_footer(header_dish, self.header, "px4af")
 
         if not self.is_sitl:
             indentation = "\t"
         else:
             indentation = ""
-
-        yield header
 
         param_names = sorted(self.param_list.keys())
         for param_name in param_names:
@@ -647,7 +639,10 @@ class Meal:
 
             yield f"{indentation}param set-default {param_name} {param_value}\n"
 
-        yield tail
+        # Read footer
+        get_logger().debug("Loading parameter footer.")
+        footer_dict = get_boilerplate(ConfigPaths().staple_dishes, "footer")
+        yield from self.build_header_footer(footer_dict, self.footer, "px4af")
 
     def export(self, format: Formats) -> Iterable[str]:
         """Export general method."""
@@ -663,13 +658,13 @@ def build_meals(names: Optional[List[str]] = None) -> Dict[str, Meal]:
     """Build the meal of the provided aircraft."""
     meals_menu = get_meals_menu(ConfigPaths().meals)
 
-    # Pick configuration if specified
+    # Pick meal if specified
     if names is not None:
         meals_to_parse = names
     else:
         meals_to_parse = list(meals_menu.keys())
 
-    # Go over the selected configs
+    # Go over the selected meals
     meals_dict = dict()
     for meal_name in meals_to_parse:
         if meal_name not in meals_menu.keys():
@@ -700,7 +695,7 @@ def build_helper(
     meal_ordered: Optional[str],
     format: Formats,
     input_folder: Optional[str],
-    default_params: str,
+    default_params: Optional[str],
     output_folder: Optional[str] = None,
     sitl: bool = False,
 ) -> None:
@@ -718,11 +713,11 @@ def build_helper(
         meal_list = None
 
     if input_folder:
-        ConfigPaths().CUSTOM_PATH = input_folder
+        ConfigPaths().CUSTOM_PATH = Path(input_folder)
         get_logger().debug(f"Setting CUSTOM_PATH to {ConfigPaths().custom_dishes}")
 
     if default_params:
-        ConfigPaths().DEFAULT_PARAMS_PATH = default_params
+        ConfigPaths().DEFAULT_PARAMS_PATH = Path(default_params)
         get_logger().debug(
             f"Setting DEFAULT_PARAMS_OVERRIDE to {ConfigPaths().default_parameters}"
         )
@@ -733,9 +728,14 @@ def build_helper(
     meals_dict = build_meals(meal_list)
 
     # Write output files in selected output
+    output_folder_path: Optional[Path]
+    if output_folder:
+        output_folder_path = Path(output_folder)
+    else:
+        output_folder_path = None
     if meal_list is None:
         # Export all meals
-        if output_folder is None:
+        if output_folder_path is None:
             raise ValueError(
                 "You must specify an output folder for the meals parameters, see build command help"
             )
@@ -746,18 +746,18 @@ def build_helper(
             if (not sitl) and meal.is_sitl:
                 continue
 
-            export_meal(meal, format, output_folder)
+            export_meal(meal, format, output_folder_path)
     else:
         # Export only a single config
         meal = meals_dict[meal_list[0]]
-        export_meal(meal, format, output_folder)
+        export_meal(meal, format, output_folder_path)
 
 
-def make_folder(folder_path: str) -> None:
+def make_folder(folder_path: Path) -> None:
     """Create folder."""
     if not os.path.isabs(folder_path):
-        folder_path = os.path.join(os.getcwd(), folder_path)
-    folder_path = os.path.expanduser(folder_path)
+        folder_path = Path.cwd() / folder_path
+    folder_path = folder_path.expanduser()
 
     if not os.path.exists(folder_path):
         try:
@@ -766,13 +766,13 @@ def make_folder(folder_path: str) -> None:
             print("Failed to create folder")
 
 
-def export_meal(config: Meal, format: Formats, output_path: Optional[str]) -> None:
+def export_meal(config: Meal, format: Formats, output_path: Optional[Path]) -> None:
     """Export a configuration to a folder or the screen."""
     if output_path is not None:
         make_folder(output_path)
         filename = build_filename(format, config)
 
-        with open(os.path.join(output_path, filename), "w") as fd:
+        with open(output_path / filename, "w") as fd:
             for row in config.export(format):
                 fd.write(row)
     else:

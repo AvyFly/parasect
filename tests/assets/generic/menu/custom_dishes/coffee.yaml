@@ -1,0 +1,5 @@
+variants:
+  filter:
+    common:
+      ingredients:
+        - [COFFEE, 1, ~]

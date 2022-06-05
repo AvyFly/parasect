@@ -1,17 +1,15 @@
 """Test cases for the __main__ module."""
-import os
-from os import path
+from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
 
 import parasect
 from . import utils
-from .utils import (  # noqa: F401 # setup_generic is used by pytest as string
-    fixture_setup_generic,
+from .utils import (  # noqa: F401 # setup_px4 is used by pytest as string
+    fixture_setup_px4,
 )
 from .utils import setup_logger  # noqa: F401 # setup_logger is an autouse fixture
-from .utils import setup_px4  # noqa: F401 # setup_px4 is used by pytest as string
 from parasect import __main__
 from parasect import _helpers
 
@@ -41,12 +39,12 @@ class TestLogging:
                 [
                     "--debug",
                     "compare",
-                    utils.PX4_JMAVSIM_PARAMS,
-                    utils.PX4_GAZEBO_PARAMS,
+                    str(utils.PX4_JMAVSIM_PARAMS),
+                    str(utils.PX4_GAZEBO_PARAMS),
                 ],
             )
-            log_path = path.join(os.getcwd(), "parasect.log")
-            assert os.path.isfile(log_path)
+            log_path = Path.cwd() / "parasect.log"
+            assert log_path.is_file()
 
     def test_no_debug(self, runner: CliRunner) -> None:
         """Ensure a log file is not generated in non-debug mode."""
@@ -54,10 +52,14 @@ class TestLogging:
         with runner.isolated_filesystem():
             _ = runner.invoke(
                 __main__.cli,
-                ["compare", utils.PX4_JMAVSIM_PARAMS, utils.PX4_GAZEBO_PARAMS],
+                [
+                    "compare",
+                    str(utils.PX4_JMAVSIM_PARAMS),
+                    str(utils.PX4_GAZEBO_PARAMS),
+                ],
             )
-            log_path = path.join(os.getcwd(), "parasect.log")
-            assert not os.path.isfile(log_path)
+            log_path = Path.cwd() / "parasect.log"
+            assert not log_path.is_file()
 
 
 class TestCompare:
@@ -67,8 +69,8 @@ class TestCompare:
         """Make sure the compare_helper API generates the correct number of lines."""
         num_exp_lines = 5 + 1 + 3 - 1
         output_str = parasect.compare(
-            file_1=utils.PX4_JMAVSIM_PARAMS,
-            file_2=utils.PX4_GAZEBO_PARAMS,
+            file_1=str(utils.PX4_JMAVSIM_PARAMS),
+            file_2=str(utils.PX4_GAZEBO_PARAMS),
             input_folder=None,
             nocal=False,
             nouser=False,
@@ -81,7 +83,7 @@ class TestCompare:
         num_exp_lines = 5 + 1 + 3
         result = runner.invoke(
             __main__.cli,
-            ["compare", utils.PX4_JMAVSIM_PARAMS, utils.PX4_GAZEBO_PARAMS],
+            ["compare", str(utils.PX4_JMAVSIM_PARAMS), str(utils.PX4_GAZEBO_PARAMS)],
         )
         assert len(result.output.splitlines()) == num_exp_lines
 
@@ -96,16 +98,12 @@ class TestBuild:
             parasect.build(
                 meal_ordered=None,
                 format=parasect._helpers.Formats.px4af,
-                input_folder=utils.PX4_INPUT_FOLDER,
-                default_params=utils.PX4_DEFAULT_PARAMS_XML,
+                input_folder=str(utils.PX4_INPUT_FOLDER),
+                default_params=str(utils.PX4_DEFAULT_PARAMS_XML),
                 output_folder="output_folder",
             )
-            assert os.path.isfile(
-                path.join(os.getcwd(), "output_folder", "1_my_vtol_1")
-            )
-            assert os.path.isfile(
-                path.join(os.getcwd(), "output_folder", "2_my_vtol_2")
-            )
+            assert (Path.cwd() / "output_folder" / "1_my_vtol_1").is_file()
+            assert (Path.cwd() / "output_folder" / "2_my_vtol_2").is_file()
 
     def test_build(self, runner: CliRunner) -> None:
         """Make sure the full command works."""
@@ -119,14 +117,10 @@ class TestBuild:
                     "-f",
                     "px4af",
                     "-i",
-                    utils.PX4_INPUT_FOLDER,
+                    str(utils.PX4_INPUT_FOLDER),
                     "-d",
-                    utils.PX4_DEFAULT_PARAMS_XML,
+                    str(utils.PX4_DEFAULT_PARAMS_XML),
                 ],
             )
-            assert os.path.isfile(
-                path.join(os.getcwd(), "output_folder", "1_my_vtol_1")
-            )
-            assert os.path.isfile(
-                path.join(os.getcwd(), "output_folder", "2_my_vtol_2")
-            )
+            assert (Path.cwd() / "output_folder" / "1_my_vtol_1").is_file()
+            assert (Path.cwd() / "output_folder" / "2_my_vtol_2").is_file()

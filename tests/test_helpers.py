@@ -1,16 +1,26 @@
 """Test cases for the private _helpers module."""
 import os
-import pathlib
+from pathlib import Path
 
 import pydantic
 import pytest
 
+from . import utils
 from .utils import (  # noqa: F401 # setup_generic is used by pytest as string
     fixture_setup_generic,
 )
+from .utils import (  # noqa: F401 # setup_px4 is used by pytest as string
+    fixture_setup_px4,
+)
 from .utils import setup_logger  # noqa: F401 # setup_logger is an autouse fixture
-from .utils import setup_px4  # noqa: F401 # setup_px4 is used by pytest as string
 from parasect import _helpers
+from parasect import build_lib
+
+
+@pytest.fixture
+def generic_meals():
+    """Build the all generic meals."""
+    return build_lib.build_meals()
 
 
 class TestLogger:
@@ -35,7 +45,7 @@ class TestLogger:
     def test_new_log_file(self):
         """Test if a new log file is indeed crated at the start of the program."""
         _helpers.Logger().clear()
-        log_file = pathlib.Path("./parasect.log")
+        log_file = Path("./parasect.log")
         log_file.write_text("old line")
         _helpers.Logger(debug=True)
         logger = _helpers.get_logger()
@@ -61,7 +71,7 @@ class TestConfigPathsPX4:
     def test_no_env_path(self):
         """Catch the correct fallback if PARASECT_PATH is unset."""
         del os.environ["PARASECT_PATH"]
-        custom_path = "."
+        custom_path = Path(".")
         _helpers.ConfigPaths().CUSTOM_PATH = custom_path
         assert _helpers.ConfigPaths().path == custom_path
 
@@ -76,9 +86,9 @@ class TestConfigPathsPX4:
 
     def test_bad_custom_path(self):
         """Raise the correct error if CUSTOM_PATH is bad."""
-        _helpers.ConfigPaths().CUSTOM_PATH = (
-            "~/idontexist"  # Unset custom paths to activate environment variable
-        )
+        _helpers.ConfigPaths().CUSTOM_PATH = Path(
+            "~/idontexist"
+        )  # Unset custom paths to activate environment variable
         with pytest.raises(NotADirectoryError):
             _helpers.ConfigPaths().path
 
@@ -92,7 +102,7 @@ class TestConfigPathsPX4:
     def test_no_env_parameters(self):
         """Catch the correct fallback if PARASECT_DEFAULTS is unset."""
         del os.environ["PARASECT_DEFAULTS"]
-        custom_path = "."
+        custom_path = Path(".")
         _helpers.ConfigPaths().DEFAULT_PARAMS_PATH = custom_path
         assert _helpers.ConfigPaths().default_parameters == custom_path
 
@@ -120,8 +130,8 @@ class TestParameterGeneric:
 
     def test_wrong_type(self):
         """Verify the correct error is raised when a wrong parameter type is requested."""
-        with pytest.raises(ValueError):
-            _helpers.get_param_from_str("1", "0")
+        with pytest.raises(TypeError):
+            _helpers.cast_param_value("1", "0")
 
     def test_get_pretty_value_int_notype(self):
         """Verify that integer values are correctly deduced."""
@@ -139,3 +149,67 @@ class TestParameterGeneric:
         param = _helpers.Parameter("TEMP", 1)
         param.param_type = "FLOAT"
         assert param.get_pretty_value() == "1.0"
+
+
+@pytest.mark.usefixtures("setup_generic")
+class TestParameterList:
+    """Test the ParameterList class."""
+
+    def test_copy_constructor(self, generic_meals):
+        """Test the copy constructor."""
+        light_meal = generic_meals["light_meal"]
+        new_parameter_list = _helpers.ParameterList(light_meal.param_list)
+        assert light_meal.param_list.keys() == new_parameter_list.keys()
+
+    def test_subtract(self, generic_meals):
+        """Test the __sub__ operation."""
+        spicy_meal = generic_meals["spicy_meal"]
+        light_meal = generic_meals["light_meal"]
+        params_diff = spicy_meal.param_list - light_meal.param_list
+        assert list(params_diff.keys()) == ["CHILLI", "JALLAPENOS"]
+
+    def test_str(self, generic_meals):
+        """Test the __str__ operation."""
+        light_meal = generic_meals["light_meal"]
+        s = light_meal.__str__()
+        assert s.count("\n") == 5
+        assert s[0:4] == "BEEF"
+
+    def test_add_illegal(self, generic_meals):
+        """Test the add_param operation when doing illegal edits."""
+        light_meal = generic_meals["light_meal"]
+        param = _helpers.Parameter("UNOBTAINIUM", -1)
+        with pytest.raises(KeyError):
+            light_meal.param_list.add_param(param, safe=True)
+        param = _helpers.Parameter("BEEF", 100)
+        with pytest.raises(KeyError):
+            light_meal.param_list.add_param(param, overwrite=False)
+
+    def test_remove_illegal(self, generic_meals):
+        """Test the remove_param operation when doing illegal edits."""
+        light_meal = generic_meals["light_meal"]
+        with pytest.raises(KeyError):
+            param = _helpers.Parameter("UNOBTAINIUM", 0)
+            light_meal.param_list.remove_param(param)
+
+
+class TestPX4ParamReaders:
+    """Test the various PX4 parameter file decoders."""
+
+    def test_xml(self, setup_px4):  # noqa: F811 # setup_px4 is a fixture
+        """Test reading from an XML parameters definition file."""
+        parameter_list = _helpers.read_params(utils.PX4_DEFAULT_PARAMS_XML)
+        # Test if the parameter exists, is in the correct group and has the correct type and value
+        assert parameter_list["ASPD_BETA_NOISE"].value == pytest.approx(0.3)
+        assert parameter_list["ASPD_BETA_NOISE"].group == "AIRSPEED VALIDATOR"
+        assert parameter_list["ASPD_BETA_NOISE"].param_type == "FLOAT"
+
+    def test_qgc(self):
+        """Test reading from a parameter file extracted from a .ulg via ulog_params."""
+        parameter_list = _helpers.read_params(utils.PX4_GAZEBO_PARAMS)
+        assert parameter_list["BAT_CRIT_THR"].value == pytest.approx(0.07)
+
+    def test_ulog_params(self):
+        """Test reading from a parameter file extracted from a .ulg via ulog_params."""
+        parameter_list = _helpers.read_params(utils.PX4_ULOG_PARAMS_FILE)
+        assert parameter_list["BAT1_A_PER_V"].value == pytest.approx(36.364)

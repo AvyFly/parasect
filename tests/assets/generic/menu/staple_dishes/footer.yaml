@@ -3,13 +3,8 @@ common:
 formats:
   px4af:
     common:
-    variants:
-      light_meal:
-        common:
-          - "Footer line 1\n"
-          - "Footer line 2\n"
 
-  px4:
-    common:
-      - "Footer line 1\n"
-      - "Footer line 2\n"
+    variants:
+      full_meal:
+        common:
+          - "Remember to bring soda!"

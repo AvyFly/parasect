@@ -55,7 +55,14 @@ def cli(debug: bool) -> None:
     type=int,
     help="Pass a specific component to compare",
 )
-def compare(file_1, file_2, input_folder, nocal, nouser, component):
+def compare(
+    file_1: str,
+    file_2: str,
+    input_folder: Optional[str],
+    nocal: bool,
+    nouser: bool,
+    component: int,
+) -> None:
     """Compare command."""
     s = compare_helper(file_1, file_2, input_folder, nocal, nouser, component)
     print(s)
@@ -107,7 +114,11 @@ def build(
 ) -> None:
     """Build command."""
     build_helper(
-        config, Formats[format], input_folder, default_parameters, output_folder
+        config,
+        Formats[format],
+        input_folder,
+        default_parameters,
+        output_folder,
     )
 
 
