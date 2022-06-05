@@ -207,23 +207,23 @@ class Dish:
 class Calibration(Dish):
     """Parameter class holding calibration parameters."""
 
-    def __init__(self, path: Path, frame: str = None):
+    def __init__(self, frame: Optional[str] = None):
         """Class constructor."""
         param_dict = get_dish(ConfigPaths().staple_dishes, "calibration")
         super().__init__(param_dict, model=frame)
 
 
-class UserDefined(Dish):
+class Operator(Dish):
     """Parameter class holding operator-defined parameters."""
 
-    def __init__(self, path: Path, frame: str = None):
+    def __init__(self, frame: Optional[str] = None):
         """Class constructor."""
         param_dict = get_dish(ConfigPaths().staple_dishes, "operator")
         super().__init__(param_dict)
 
 
 class Meal:
-    """An order able to build the full parameter list of an aircraft."""
+    """An order able to build the full parameter list of a vehicle."""
 
     name = ""
     frame_id: int
@@ -277,8 +277,8 @@ class Meal:
         else:
             self.param_list = ParameterList()
 
-        # Decide if new paramteres are allowed in this Meal
-        if default_params_filepath:
+        # Decide if new parameters are allowed in this Meal
+        if default_params_filepath or self.parent:
             self.add_new = False
         else:
             self.add_new = True
@@ -293,7 +293,7 @@ class Meal:
         if "hil" in meal_dict.keys():
             self.is_hil = meal_dict["hil"]
 
-        # Check if it is allowed to add new (non-existing in the parent recipe) parameters
+        # Check if it is explicitly allowed to add new (non-existing in the parent recipe) parameters
         if "add_new" in meal_dict.keys():
             self.add_new = meal_dict["add_new"]
 
@@ -341,7 +341,9 @@ class Meal:
                     all_meals, default_params_filepath, configs_path, parent_name
                 )
             else:
-                raise TypeError(f"Tried to parse parent with name {parent_name}")
+                raise TypeError(
+                    f"Tried to parse invalid parent with value {parent_name}"
+                )
 
     def parse_header_footer(self, meal_dict: MealType) -> None:
         """Store the desired header and footer files."""
@@ -437,7 +439,7 @@ class Meal:
         if self.remove_calibration_flag:
             get_logger().debug(f"Removing calibration for {self.name}")
             # Remove calibration values (need to keep their list up-to-date)
-            calibration_params = Calibration(ConfigPaths().staple_dishes)
+            calibration_params = Calibration()
             for param in calibration_params:
                 self.param_list.remove_param(param)
 
@@ -446,7 +448,7 @@ class Meal:
         if self.remove_operator_flag:
             get_logger().debug(f"Removing user data for {self.name}")
             # Remove user-defined values
-            user_params = UserDefined(ConfigPaths().staple_dishes)
+            user_params = Operator()
             for param in user_params:
                 self.param_list.remove_param(param)
 
@@ -475,7 +477,7 @@ class Meal:
                     if param.name not in default_param_list.keys():
                         # If not, raise an error
                         raise KeyError(
-                            f"Parameter {param} does not exist in base parameter set."
+                            f"Parameter {param} does not exist in default parameter set."
                         )
                     else:
                         # If yes, read their type and set it, because its type is not specified in the parent param list
@@ -560,39 +562,36 @@ class Meal:
 
     #     return new_dict
 
-    def read_header_footer(
+    def build_header_footer(
         self,
         boilerplate_model: BoilerplateText,
-        group_name: Optional[str],
+        variant_name: Optional[str],
         text_type: str,
-    ) -> str:
+    ) -> Generator[str, None, None]:
         """Grab the header and footer sections from the corresponding dish."""
         # Load common list
         get_logger().debug("Parsing common parameters")
 
-        boilerplate = ""
         # Read text common across text_types
         common_text = boilerplate_model.common
         if common_text is not None:
             for row in common_text:
-                boilerplate += row + "\n"
+                yield row + "\n"
 
         # Read text specific to the text_type
         format_text = boilerplate_model.formats[text_type].common
         if format_text is not None:
             for row in format_text:
-                boilerplate += row + "\n"
+                yield row + "\n"
 
         # Read text specific to the meal
-        if group_name is not None and boilerplate_model.formats[text_type].variants:
+        if variant_name is not None:
             variants = boilerplate_model.formats[text_type].variants
             if variants is not None:
-                meal_text = variants[group_name].common
+                meal_text = variants[variant_name].common
                 if meal_text is not None:
                     for row in meal_text:
-                        boilerplate += row + "\n"
-
-        return boilerplate
+                        yield row + "\n"
 
     def __str__(self):
         """__str__ dunder method."""
@@ -603,8 +602,7 @@ class Meal:
         # Read header
         get_logger().debug("Loading parameter header")
         header_model = get_boilerplate(ConfigPaths().staple_dishes, "header")
-        header = self.read_header_footer(header_model, self.header, "px4")
-        yield header
+        yield from self.build_header_footer(header_model, self.header, "px4")
 
         param_names = sorted(self.param_list.keys())
         for param_name in param_names:
@@ -628,19 +626,12 @@ class Meal:
         # Read header
         get_logger().debug("Loading parameter header.")
         header_dish = get_boilerplate(ConfigPaths().staple_dishes, "header")
-        header = self.read_header_footer(header_dish, self.header, "px4af")
-
-        # Read footer
-        get_logger().debug("Loading parameter footer.")
-        footer_dict = get_boilerplate(ConfigPaths().staple_dishes, "footer")
-        tail = self.read_header_footer(footer_dict, self.footer, "px4af")
+        yield from self.build_header_footer(header_dish, self.header, "px4af")
 
         if not self.is_sitl:
             indentation = "\t"
         else:
             indentation = ""
-
-        yield header
 
         param_names = sorted(self.param_list.keys())
         for param_name in param_names:
@@ -648,7 +639,10 @@ class Meal:
 
             yield f"{indentation}param set-default {param_name} {param_value}\n"
 
-        yield tail
+        # Read footer
+        get_logger().debug("Loading parameter footer.")
+        footer_dict = get_boilerplate(ConfigPaths().staple_dishes, "footer")
+        yield from self.build_header_footer(footer_dict, self.footer, "px4af")
 
     def export(self, format: Formats) -> Iterable[str]:
         """Export general method."""
@@ -701,7 +695,7 @@ def build_helper(
     meal_ordered: Optional[str],
     format: Formats,
     input_folder: Optional[str],
-    default_params: str,
+    default_params: Optional[str],
     output_folder: Optional[str] = None,
     sitl: bool = False,
 ) -> None:

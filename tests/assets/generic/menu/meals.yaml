@@ -1,12 +1,15 @@
 snack:
-  frame_id: 1
   fruit: single
+
+breakfast:
+  dairy: cereal
 
 light_meal:
   frame_id: 1
   salad: ~
   meat_and_potatoes: ~
   remove_calibration: True
+  remove_operator: True
   header: ~
   footer: ~
 
@@ -15,6 +18,7 @@ spicy_meal:
   salad: ~
   meat_and_potatoes: spicy/extra
   remove_calibration: True
+  remove_operator: True
   header: ~
   footer: ~
 
@@ -24,12 +28,18 @@ full_meal:
   meat_and_potatoes: ~
   bread: baguette
   desert: ~
-  remove_calibration: True
   header: ~
-  footer: ~
+  footer: full_meal
 
 christmass_at_grandmas:
   frame_id: 4
   parent: full_meal
   salad: village
   extra_quantities: ~
+  add_new: True
+
+dangerous_combinations:
+  frame_id: 5
+  parent: breakfast
+  coffee: filter
+  add_new: True

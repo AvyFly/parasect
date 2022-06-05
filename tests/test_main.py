@@ -1,6 +1,4 @@
 """Test cases for the __main__ module."""
-import os
-from os import path
 from pathlib import Path
 
 import pytest
@@ -8,8 +6,10 @@ from click.testing import CliRunner
 
 import parasect
 from . import utils
+from .utils import (  # noqa: F401 # setup_px4 is used by pytest as string
+    fixture_setup_px4,
+)
 from .utils import setup_logger  # noqa: F401 # setup_logger is an autouse fixture
-from .utils import setup_px4  # noqa: F401 # setup_px4 is used by pytest as string
 from parasect import __main__
 from parasect import _helpers
 
@@ -43,8 +43,8 @@ class TestLogging:
                     str(utils.PX4_GAZEBO_PARAMS),
                 ],
             )
-            log_path = path.join(os.getcwd(), "parasect.log")
-            assert os.path.isfile(log_path)
+            log_path = Path.cwd() / "parasect.log"
+            assert log_path.is_file()
 
     def test_no_debug(self, runner: CliRunner) -> None:
         """Ensure a log file is not generated in non-debug mode."""
@@ -58,8 +58,8 @@ class TestLogging:
                     str(utils.PX4_GAZEBO_PARAMS),
                 ],
             )
-            log_path = path.join(os.getcwd(), "parasect.log")
-            assert not os.path.isfile(log_path)
+            log_path = Path.cwd() / "parasect.log"
+            assert not log_path.is_file()
 
 
 class TestCompare:
@@ -102,12 +102,8 @@ class TestBuild:
                 default_params=str(utils.PX4_DEFAULT_PARAMS_XML),
                 output_folder="output_folder",
             )
-            assert os.path.isfile(
-                path.join(os.getcwd(), "output_folder", "1_my_vtol_1")
-            )
-            assert os.path.isfile(
-                path.join(os.getcwd(), "output_folder", "2_my_vtol_2")
-            )
+            assert (Path.cwd() / "output_folder" / "1_my_vtol_1").is_file()
+            assert (Path.cwd() / "output_folder" / "2_my_vtol_2").is_file()
 
     def test_build(self, runner: CliRunner) -> None:
         """Make sure the full command works."""
@@ -126,9 +122,5 @@ class TestBuild:
                     str(utils.PX4_DEFAULT_PARAMS_XML),
                 ],
             )
-            assert os.path.isfile(
-                path.join(os.getcwd(), "output_folder", "1_my_vtol_1")
-            )
-            assert os.path.isfile(
-                path.join(os.getcwd(), "output_folder", "2_my_vtol_2")
-            )
+            assert (Path.cwd() / "output_folder" / "1_my_vtol_1").is_file()
+            assert (Path.cwd() / "output_folder" / "2_my_vtol_2").is_file()

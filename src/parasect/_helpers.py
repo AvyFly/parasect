@@ -5,10 +5,10 @@ import logging
 import math
 import os
 import typing
-from pathlib import Path
 from abc import ABC
 from abc import abstractmethod
 from enum import Enum
+from pathlib import Path
 from typing import Any
 from typing import Dict
 from typing import Generator
@@ -191,7 +191,13 @@ class Formats(Enum):
 
 
 ReservedOptions = Literal[
-    "frame_id", "sitl", "parent", "remove_calibration", "remove_operator"
+    "frame_id",
+    "sitl",
+    "hil",
+    "parent",
+    "remove_calibration",
+    "remove_operator",
+    "add_new",
 ]
 ReservedOptionsSequence = typing.get_args(ReservedOptions)
 

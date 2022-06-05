@@ -28,8 +28,8 @@ def fixture_setup_generic():
     parasect._helpers.ConfigPaths().clear()
 
 
-@pytest.fixture
-def setup_px4():
+@pytest.fixture(name="setup_px4")
+def fixture_setup_px4():
     """Set up the parasect paths for PX4 testing."""
     os.environ["PARASECT_PATH"] = str(PX4_INPUT_FOLDER)
     os.environ["PARASECT_DEFAULTS"] = str(PX4_DEFAULT_PARAMS_XML)

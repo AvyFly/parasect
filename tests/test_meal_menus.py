@@ -4,8 +4,10 @@ import pytest
 from .utils import (  # noqa: F401 # setup_generic is used by pytest as string
     fixture_setup_generic,
 )
+from .utils import (  # noqa: F401 # setup_px4 is used by pytest as string
+    fixture_setup_px4,
+)
 from .utils import setup_logger  # noqa: F401 # setup_logger is an autouse fixture
-from .utils import setup_px4  # noqa: F401 # setup_px4 is used by pytest as string
 from parasect import build_lib
 
 
@@ -19,6 +21,16 @@ def generic_meals():
 class TestGenericMeals:
     """Test that all Generic meals have generated correctly."""
 
+    def test_snack(self, generic_meals):
+        """Test if the snack has correctly generated."""
+        snack = generic_meals["snack"]
+        assert "APPLE" in snack.param_list.keys()
+
+    def test_breakfast(self, generic_meals):
+        """Test if the breakfast has correctly generated."""
+        breakfast = generic_meals["breakfast"]
+        assert "MILK" in breakfast.param_list.keys()
+
     def test_light_meal(self, generic_meals):
         """Test if the light_meal has correctly generated."""
         light_meal = generic_meals["light_meal"]
@@ -27,6 +39,8 @@ class TestGenericMeals:
         assert "MUSHROOMS" not in light_meal.param_list.keys()
         assert "VINEGAR" not in light_meal.param_list.keys()
         assert "EGG" not in light_meal.param_list.keys()
+        assert "SALT" not in light_meal.param_list.keys()
+        assert "GRAVY" not in light_meal.param_list.keys()
 
     def test_spicy_meal(self, generic_meals):
         """Test if the spicy_meal has correctly generated."""
@@ -47,3 +61,9 @@ class TestGenericMeals:
         """Test if the christmass_meal has correctly generated."""
         christmass_meal = generic_meals["christmass_at_grandmas"]
         assert christmass_meal.param_list["BEEF"].value == 5
+
+    def test_dangerous_combinations(self, generic_meals):
+        """Test if the dangerous_combinations has correctly generated."""
+        dangerous_combinations = generic_meals["dangerous_combinations"]
+        assert "MILK" in dangerous_combinations.param_list.keys()
+        assert "COFFEE" in dangerous_combinations.param_list.keys()

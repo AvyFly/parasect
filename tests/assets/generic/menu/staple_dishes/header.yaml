@@ -1,4 +1,5 @@
 common:
+  - "# Parameter file exported by Parasect."
 
 formats:
   px4af:

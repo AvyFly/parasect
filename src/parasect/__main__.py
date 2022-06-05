@@ -1,5 +1,4 @@
 """Command-line interface."""
-from pathlib import Path
 import cProfile
 from pstats import Stats
 from typing import Optional

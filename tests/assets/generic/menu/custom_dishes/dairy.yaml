@@ -1,0 +1,6 @@
+variants:
+  cereal:
+    common:
+      ingredients:
+        - [MILK, 1, ~]
+        - [CEREAL, 1, ~]
