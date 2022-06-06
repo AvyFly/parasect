@@ -653,9 +653,31 @@ class Meal:
         footer_dict = get_boilerplate(ConfigPaths().staple_dishes, "footer")
         yield from self.build_header_footer(footer_dict, self.footer, "px4af")
 
+    def export_to_csv(self) -> Generator[str, None, None]:
+        """Export as csv file."""
+        # Read header
+        get_logger().debug("Loading parameter header.")
+        header_dish = get_boilerplate(ConfigPaths().staple_dishes, "header")
+        yield from self.build_header_footer(header_dish, self.header, "csv")
+
+        indentation = ""
+
+        param_names = sorted(self.param_list.keys())
+        for param_name in param_names:
+            param_value = self.param_list[param_name].get_pretty_value()
+
+            yield f"{indentation}{param_name},{param_value}\n"
+
+        # Read footer
+        get_logger().debug("Loading parameter footer.")
+        footer_dict = get_boilerplate(ConfigPaths().staple_dishes, "footer")
+        yield from self.build_header_footer(footer_dict, self.footer, "csv")
+
     def export(self, format: Formats) -> Iterable[str]:
         """Export general method."""
-        if format == Formats.px4:
+        if format == Formats.csv:
+            return self.export_to_csv()
+        elif format == Formats.px4:
             return self.export_to_px4()
         elif format == Formats.px4af:
             return self.export_to_px4af()
@@ -689,7 +711,9 @@ def build_meals(names: Optional[List[str]] = None) -> Dict[str, Meal]:
 
 def build_filename(format: Formats, meal: Meal) -> str:
     """Generate the output filename."""
-    if format == Formats.px4:
+    if format == Formats.csv:
+        return f"{meal.name}.csv"
+    elif format == Formats.px4:
         return f"{meal.name}.params"
     elif format == Formats.px4af:
         filename = f"{meal.frame_id}_{meal.name}"
@@ -702,7 +726,7 @@ def build_filename(format: Formats, meal: Meal) -> str:
 
 def build_helper(
     meal_ordered: Optional[str],
-    format: Formats,
+    format: Union[Formats, str],
     input_folder: Optional[str],
     default_params: Optional[str],
     output_folder: Optional[str] = None,
@@ -731,17 +755,21 @@ def build_helper(
             f"Setting DEFAULT_PARAMS_OVERRIDE to {ConfigPaths().default_parameters}"
         )
 
-    get_logger().debug(f"Building configuration {meal_ordered} for format {format}")
+    if isinstance(format, str):
+        output_format = Formats(format)
+    else:
+        output_format = format
+
+    get_logger().debug(
+        f"Building configuration {meal_ordered} for format {output_format}"
+    )
 
     # Generate the meals
     meals_dict = build_meals(meal_list)
 
     # Write output files in selected output
-    output_folder_path: Optional[Path]
-    if output_folder:
-        output_folder_path = Path(output_folder)
-    else:
-        output_folder_path = None
+    output_folder_path = convert_str_to_path(output_folder)
+
     if meal_list is None:
         # Export all meals
         if output_folder_path is None:
@@ -755,11 +783,19 @@ def build_helper(
             if (not sitl) and meal.is_sitl:
                 continue
 
-            export_meal(meal, format, output_folder_path)
+            export_meal(meal, output_format, output_folder_path)
     else:
         # Export only a single config
         meal = meals_dict[meal_list[0]]
-        export_meal(meal, format, output_folder_path)
+        export_meal(meal, output_format, output_folder_path)
+
+
+def convert_str_to_path(path: Optional[str]) -> Optional[Path]:
+    """Convert a str path representation to Optional[Path]."""
+    if path:
+        return Path(path)
+    else:
+        return None
 
 
 def make_folder(folder_path: Path) -> None:

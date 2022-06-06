@@ -186,6 +186,7 @@ class ConfigPaths(Borg):
 class Formats(Enum):
     """Supported output formats."""
 
+    csv = "csv"
     px4 = "px4"
     px4af = "px4af"
 

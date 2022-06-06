@@ -9,6 +9,8 @@ Full CLI Reference
    :prog: parasect
    :nested: full
 
+.. _api_reference:
+
 API Reference
 -------------
 

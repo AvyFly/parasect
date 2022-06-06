@@ -7,6 +7,7 @@ common:
   allergens:
     substances:
       - [MUSHROOMS, ~, My stomach really can't handle them]
+    groups:
 
 variants:
   spicy:
