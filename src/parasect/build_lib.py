@@ -7,6 +7,7 @@ from typing import Iterable
 from typing import List
 from typing import Optional
 from typing import Tuple
+from typing import Union
 
 from ._helpers import Allergens
 from ._helpers import BoilerplateText
@@ -198,6 +199,10 @@ class Dish:
     def __iter__(self):
         """__iter__ dunder method."""
         yield from self.param_list
+
+    def __contains__(self, item: Union[str, Parameter]) -> bool:
+        """Answer if the Dish contains a parameter."""
+        return self.param_list.__contains__(item)
 
     def __len__(self):
         """__len__ dunder method."""
@@ -596,6 +601,10 @@ class Meal:
     def __str__(self):
         """__str__ dunder method."""
         return self.param_list.__str__()
+
+    def __contains__(self, item: Union[str, Parameter]) -> bool:
+        """Answer if the Meal contains a parameter."""
+        return self.param_list.__contains__(item)
 
     def export_to_px4(self) -> Generator[str, None, None]:
         """Export as PX4 parameter file."""

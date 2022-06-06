@@ -26,7 +26,7 @@ def get_vehicles_comparison(
     param_list_1: ParameterList,
     param_list_2: ParameterList,
     nocal: bool,
-    nouser: bool,
+    noop: bool,
     component: Optional[int] = None,
 ) -> List:
     """Top-level comparison function.
@@ -34,7 +34,7 @@ def get_vehicles_comparison(
     Returns a list of comparison results
     Each list item refers to a unique (vehicle-id, component-id) tuple
     """
-    # Collect vehicle IDs and component IDsDishModel
+    # Collect vehicle IDs and component IDs
     id_dict = collect_vid_cid(param_list_1, param_list_2)
 
     # Remove calibration parameters from both lists
@@ -43,27 +43,22 @@ def get_vehicles_comparison(
         param_list_2 -= Calibration().param_list
 
     # Remove user parameters from both lists
-    if nouser:
+    if noop:
         param_list_1 -= Operator().param_list
         param_list_2 -= Operator().param_list
 
     # Generate comparison results
     comparison_results = list()
 
-    if len(id_dict) == 0:
-        # TODO add option to disregard vid
-        result = compare_parameter_lists(param_list_1, param_list_2, None, component)
-        comparison_results.append(result)
-    else:
-        # Iterate over all VIDs
-        for vid, cids in id_dict.items():
-            # Iterate over all CIDs:
-            for cid in cids:
-                # Filter for the desired component
-                if component is not None and cid != component:
-                    continue
-                result = compare_parameter_lists(param_list_1, param_list_2, vid, cid)
-                comparison_results.append(result)
+    # Iterate over all VIDs
+    for vid, cids in id_dict.items():
+        # Iterate over all CIDs:
+        for cid in cids:
+            # Filter for the desired component
+            if component is not None and cid != component:
+                continue
+            result = compare_parameter_lists(param_list_1, param_list_2, vid, cid)
+            comparison_results.append(result)
 
     return comparison_results
 
@@ -71,7 +66,18 @@ def get_vehicles_comparison(
 def collect_vid_cid(
     param_list_1: ParameterList, param_list_2: ParameterList
 ) -> Dict[int, Set[int]]:
-    """Collect vehicle IDs and component IDs."""
+    """Collect vehicle IDs and component IDs.
+
+    Args:
+        param_list_1: The first ParameterList to parse for VIDs and CIDs.
+        param_list_2: The second ParameterList to parse for VIDs and CIDs.
+
+    Returns:
+        A Dict where the keys are the VIDs found. The value of each key is the
+        CIDs found in every VID.
+        The result will never be an empty Dict because the Parameter object is
+        initialized with VID=1 and CID=1.
+    """
     id_dict = dict()  # type: Dict[int, Set[int]]
     for param in it.chain(param_list_1, param_list_2):
         # If this VID is new, create it
@@ -179,7 +185,7 @@ def param_id_test(
         get_logger().debug("Yes, they should.")
         return True
     else:
-        get_logger().debug("No, they shoul not.")
+        get_logger().debug("No, they should not.")
         return False
 
 
@@ -286,8 +292,8 @@ def get_column_lengths(
                 max_param_length = len(param_tuple[1].name)  # type: ignore[union-attr] # Caught at the start of the for-loop
 
         if param_tuple[1] is not None:
-            if max_value_1_length < len(param_tuple[1].get_pretty_value()):
-                max_value_1_length = len(param_tuple[1].get_pretty_value())
+            if max_value_2_length < len(param_tuple[1].get_pretty_value()):
+                max_value_2_length = len(param_tuple[1].get_pretty_value())
 
     return [max_param_length, max_value_1_length, max_value_2_length]
 
@@ -296,13 +302,15 @@ def generate_comparison_strings(
     comparison_list: List[Tuple[Optional[Parameter], Optional[Parameter]]],
     column_lengths: List[int],
 ) -> str:
-    """Generate the comparison string output, given a comparison list."""
+    """Generate the comparison string output, given a comparison list.
+
+    Assumes that the comparison list contains the same VID-CID pair across all parameters.
+    """
     # Check if there's anything to check at all
     if len(comparison_list) == 0:
         return ""
 
     # Extract the relevant vid and cid
-    # Assumes all parameters in list have the same vid and cid
     if comparison_list[0][0] is not None:
         vid = comparison_list[0][0].vid
         cid = comparison_list[0][0].cid
@@ -319,10 +327,9 @@ def generate_comparison_strings(
 
     # Generate header
     output_str = ""
-    if vid is not None:
-        output_str += "-" * 80 + "\n"
-        output_str += f"Component {vid}-{cid}:\n"
-        output_str += "-" * 80 + "\n"
+    output_str += "-" * 80 + "\n"
+    output_str += f"Component {vid}-{cid}:\n"
+    output_str += "-" * 80 + "\n"
 
     # Parse contents
     for param_1, param_2 in comparison_list:
@@ -370,7 +377,7 @@ def build_comparison_row(
 
 
 def build_comparison_string(
-    comparison_lists: List[List[Tuple[Parameter, Parameter]]],
+    comparison_lists: List[List[Tuple[Optional[Parameter], Optional[Parameter]]]],
     file1: Optional[str],
     file2: Optional[str],
 ) -> str:
@@ -418,7 +425,7 @@ def compare_helper(
     file_2: str,
     input_folder: Optional[str],
     nocal: bool,
-    nouser: bool,
+    noop: bool,
     component: Optional[int],
 ) -> str:
     """Helper function for the comparison function."""
@@ -431,7 +438,7 @@ def compare_helper(
     param_list_1 = read_params(Path(file_1))
     param_list_2 = read_params(Path(file_2))
     comparison_lists = get_vehicles_comparison(
-        param_list_1, param_list_2, nocal, nouser, component
+        param_list_1, param_list_2, nocal, noop, component
     )
     return build_comparison_string(
         comparison_lists, param_list_1.source_file, param_list_2.source_file

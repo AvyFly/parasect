@@ -42,11 +42,11 @@ def cli(debug: bool) -> None:
 )
 @click.option(
     "-u",
-    "--supress-user-defined",
-    "nouser",
+    "--supress-operator-defined",
+    "noop",
     is_flag=True,
     default=False,
-    help="Dont compare user-selectable parameters.",
+    help="Dont compare operator-selectable parameters.",
 )
 @click.option(
     "-c",
@@ -60,11 +60,11 @@ def compare(
     file_2: str,
     input_folder: Optional[str],
     nocal: bool,
-    nouser: bool,
+    noop: bool,
     component: int,
 ) -> None:
     """Compare command."""
-    s = compare_helper(file_1, file_2, input_folder, nocal, nouser, component)
+    s = compare_helper(file_1, file_2, input_folder, nocal, noop, component)
     print(s)
 
 

@@ -73,7 +73,7 @@ class TestCompare:
             file_2=str(utils.PX4_GAZEBO_PARAMS),
             input_folder=None,
             nocal=False,
-            nouser=False,
+            noop=False,
             component=None,
         )
         assert output_str.count("\n") == num_exp_lines
