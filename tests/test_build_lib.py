@@ -133,10 +133,10 @@ class TestConvertTtrToPath:
 
     def test_str(self):
         """Test str input."""
-        path = "my/home"
-        result = build_lib.convert_str_to_path(path)
+        path = Path("my") / "home"
+        result = build_lib.convert_str_to_path(str(path))
         assert isinstance(result, Path)
-        assert str(result) == path
+        assert result == path
 
 
 class TestBuildHelper:
