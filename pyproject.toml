@@ -60,15 +60,15 @@ source = ["parasect", "tests"]
 
 [tool.coverage.report]
 show_missing = true
-fail_under = 89
+fail_under = 95
 
 [tool.mypy]
-# strict = true
+strict = false
 warn_unused_configs = true
-# disallow_any_generics = true
+disallow_any_generics = false
 disallow_subclassing_any = true
 disallow_untyped_calls = true
-# disallow_untyped_defs = true
+disallow_untyped_defs = false
 disallow_incomplete_defs = true
 check_untyped_defs = true
 disallow_untyped_decorators = true

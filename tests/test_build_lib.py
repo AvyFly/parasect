@@ -38,6 +38,29 @@ class TestDish:
         dish = build_lib.Dish(dish_model, "single")
         assert len(dish) == 1
 
+    def test_contains(self):
+        """Test the __contains__ dunder method."""
+        dish_model = _helpers.get_dish(
+            _helpers.ConfigPaths().custom_dishes, "meat_and_potatoes"
+        )
+        dish = build_lib.Dish(dish_model)
+        assert "BEEF" in dish.param_list
+        param = _helpers.Parameter("BEEF", 100)
+        assert param in dish.param_list
+        assert "UNOBTAINIUM" not in dish.param_list
+
+
+class TestMeal:
+    """Test the Meal class."""
+
+    def test_contains(self, setup_generic, build_meals):
+        """Test the __contains__ dunder method."""
+        light_meal = build_meals["light_meal"]
+        assert "BEEF" in light_meal.param_list
+        param = _helpers.Parameter("BEEF", 100)
+        assert param in light_meal.param_list
+        assert "UNOBTAINIUM" not in light_meal.param_list
+
 
 class TestExport:
     """Testing the export functionalities."""

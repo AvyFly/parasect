@@ -420,14 +420,23 @@ class Parameter:
     decimal = None  # Suggested increment by the parameter documentation
     reboot_required = False
     group = None
-    vid: int = 1  # Vehicle ID, default 1
-    cid: int = 1  # Componenet ID, default 1
+    vid: int  # Vehicle ID, default 1
+    cid: int  # Componenet ID, default 1
 
-    def __init__(self, name: str, value: Union[int, float]) -> None:
+    def __init__(
+        self,
+        name: str,
+        value: Union[int, float],
+        param_type: Optional[str] = None,
+        vid: int = 1,
+        cid: int = 1,
+    ) -> None:
         """Class constructor."""
         self.name = name.upper()
         self.value = value
-        self.param_type = None
+        self.param_type = param_type
+        self.vid = vid
+        self.cid = cid
 
     def __str__(self) -> str:
         """__str__ dunder method."""
@@ -514,6 +523,13 @@ class ParameterList:
     def __getitem__(self, key: str) -> Parameter:
         """__getitem__ dunder method."""
         return self.params[key]
+
+    def __contains__(self, item: Union[str, Parameter]) -> bool:
+        """Answer if the parameter list contains a parameter."""
+        if isinstance(item, str):
+            return item in self.params.keys()
+        if isinstance(item, Parameter):
+            return item.name in self.params.keys()
 
     def keys(self) -> KeysView:
         """__keys__ dunder method.

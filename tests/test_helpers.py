@@ -192,6 +192,14 @@ class TestParameterList:
             param = _helpers.Parameter("UNOBTAINIUM", 0)
             light_meal.param_list.remove_param(param)
 
+    def test_contains(self, generic_meals):
+        """Test the __contains__ dunder method."""
+        light_meal = generic_meals["light_meal"]
+        assert "BEEF" in light_meal.param_list
+        param = _helpers.Parameter("BEEF", 100)
+        assert param in light_meal.param_list
+        assert "UNOBTAINIUM" not in light_meal.param_list
+
 
 class TestPX4ParamReaders:
     """Test the various PX4 parameter file decoders."""
