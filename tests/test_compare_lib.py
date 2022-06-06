@@ -1,5 +1,7 @@
 """Test cases for the private build_lib module."""
-from typing import Optional, List, Tuple
+from typing import List
+from typing import Optional
+from typing import Tuple
 
 import pytest
 
@@ -12,9 +14,10 @@ from .utils import (  # noqa: F401 # setup_px4 is used by pytest as string
 )
 from .utils import setup_logger  # noqa: F401 # setup_logger is an autouse fixture
 from parasect import _helpers
-from parasect._helpers import Parameter, ParameterList
 from parasect import build_lib
 from parasect import compare_lib
+from parasect._helpers import Parameter
+from parasect._helpers import ParameterList
 
 
 class TestGetVehiclesComparison:
