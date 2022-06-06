@@ -19,7 +19,7 @@ autopilot configuration. This comes down to creating a folder structure that rep
 First, create your main *Parasect* input folder, which we'll call ``menu`` for now (the actual folder name isn't important).
 By the end of this guide, its tree will look something like this:
 
-.. literalinclude:: assets/generic_menu.inc
+.. literalinclude:: assets/generic_menu.txt
 
 Make two subfolders in it: ``custom_dishes`` and ``staple_dishes``.
 

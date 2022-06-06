@@ -35,6 +35,6 @@ parasect.build(
 
 # Build Generic Meals directory tree
 tree_string = display_tree(generic_menu_path, string_rep=True)
-output_filepath = docs_assets_path / "generic_menu.inc"
+output_filepath = docs_assets_path / "generic_menu.txt"
 with output_filepath.open("w") as f:
     f.write(tree_string)
