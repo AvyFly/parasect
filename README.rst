@@ -56,7 +56,10 @@ Requirements
 *Parasect* is a pure-Python project. Its requirements are managed by the Poetry_ dependency manager.
 When you install *Parasect* via pip_ its requirements will also be installed automatically.
 
-Currently *Parasect* has only been tested in **Ubuntu Linux**.
+Currently *Parasect* has been tested:
+
+* in Continuous Integration servers for **Ubuntu Linux**, **Windows** and **MacOS**
+* manually in **Ubuntu Linux**.
 
 
 Installation

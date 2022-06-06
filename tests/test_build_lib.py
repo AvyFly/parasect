@@ -79,6 +79,13 @@ class TestExport:
         lines = list(gen)
         assert lines[-1].startswith("Remember")
 
+    def test_export_csv(self, setup_generic, build_meals):
+        """Test if exports to PX4 parameter format work."""
+        meal = build_meals["light_meal"]
+        gen = meal.export_to_csv()
+        lines = list(gen)
+        assert lines[1].startswith("# Parameter name, Parameter value")
+
     def test_export_px4(self, setup_px4, build_meals):
         """Test if exports to PX4 parameter format work."""
         vtol_1 = build_meals["my_vtol_1"]
@@ -99,6 +106,11 @@ class TestExport:
 class TestBuildFilename:
     """Test the build_filename function."""
 
+    def test_csv(self, build_meals):
+        """Test the csv format."""
+        name = build_lib.build_filename(_helpers.Formats.csv, build_meals["light_meal"])
+        assert Path(name).suffix == ".csv"
+
     def test_px4(self, build_meals):
         """Test the px4 format."""
         name = build_lib.build_filename(_helpers.Formats.px4, build_meals["light_meal"])
@@ -110,6 +122,21 @@ class TestBuildFilename:
             _helpers.Formats.px4af, build_meals["light_meal"]
         )
         assert name == "1_light_meal"
+
+
+class TestConvertTtrToPath:
+    """Test convert_str_to_path."""
+
+    def test_none(self):
+        """Test None input."""
+        assert build_lib.convert_str_to_path(None) is None
+
+    def test_str(self):
+        """Test str input."""
+        path = "my/home"
+        result = build_lib.convert_str_to_path(path)
+        assert isinstance(result, Path)
+        assert str(result) == path
 
 
 class TestBuildHelper:
@@ -139,3 +166,20 @@ class TestBuildHelper:
             output_folder=str(path),
         )
         assert (path / "1_my_vtol_1").is_file()
+
+    def test_csv(self, setup_generic, tmp_path):
+        """Test exporting the Generic meals with the csv format.
+
+        This invocation is also used by the documentation.
+        """
+        build_lib.build_helper(
+            None,
+            _helpers.Formats("csv"),
+            str(_helpers.ConfigPaths().path),
+            None,
+            tmp_path,
+        )
+        meals_menu = _helpers.get_meals_menu(_helpers.ConfigPaths().meals)
+        generated_meals = {gen_file.stem for gen_file in list(tmp_path.iterdir())}
+        for meal in meals_menu.keys():
+            assert meal in generated_meals
