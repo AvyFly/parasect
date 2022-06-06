@@ -177,7 +177,7 @@ class TestBuildHelper:
             _helpers.Formats("csv"),
             str(_helpers.ConfigPaths().path),
             None,
-            tmp_path,
+            str(tmp_path),
         )
         meals_menu = _helpers.get_meals_menu(_helpers.ConfigPaths().meals)
         generated_meals = {gen_file.stem for gen_file in list(tmp_path.iterdir())}
