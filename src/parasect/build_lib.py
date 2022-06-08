@@ -233,7 +233,7 @@ class Meal:
     name = ""
     frame_id: int
     is_sitl = False
-    is_hil = False
+    is_hitl = False
     header: Optional[str] = None
     footer: Optional[str] = None
     parent: Optional["Meal"] = None
@@ -294,9 +294,9 @@ class Meal:
         if "sitl" in meal_dict.keys():
             self.is_sitl = meal_dict["sitl"]
 
-        # Check if this Recipe refers to a HIL model
-        if "hil" in meal_dict.keys():
-            self.is_hil = meal_dict["hil"]
+        # Check if this Recipe refers to a HITL model
+        if "hitl" in meal_dict.keys():
+            self.is_hitl = meal_dict["hitl"]
 
         # Check if it is explicitly allowed to add new (non-existing in the parent recipe) parameters
         if "add_new" in meal_dict.keys():
@@ -717,7 +717,7 @@ def build_filename(format: Formats, meal: Meal) -> str:
         return f"{meal.name}.params"
     elif format == Formats.px4af:
         filename = f"{meal.frame_id}_{meal.name}"
-        if meal.is_hil:
+        if meal.is_hitl:
             filename += ".hil"
         return filename
     else:
