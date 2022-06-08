@@ -145,7 +145,7 @@ Sometimes you want to specify a base Meal (parameter set) and then a bunch more 
 to that first one, except for very few changes.
 One such example is wanting a basic parameter set and then additional vehicles with adjustments to the values of certain
 parameters.
-Another example is wanting additional Meal variations configuring a camera mount or a secondary radio. 
+Another example is wanting additional Meal variations configuring a camera mount or a secondary radio.
 
 Instead of re-specifying an identical Meal with the additional Dishes you can specify the base Meal as the
 ``parent`` of the new Meals and specify **only the additional** Dishes.
