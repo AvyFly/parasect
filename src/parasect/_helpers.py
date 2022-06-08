@@ -194,7 +194,7 @@ class Formats(Enum):
 ReservedOptions = Literal[
     "frame_id",
     "sitl",
-    "hil",
+    "hitl",
     "parent",
     "remove_calibration",
     "remove_operator",

@@ -122,6 +122,34 @@ Example Meals Menu:
 
 There are also some reserved keywords for the Meal dictionary:
 
-* ``frame_id``
-* ``sitl``
-* ``parent``
+* ``sitl``: Marks the Meal for Simulation-In-The-Loop (SITL) purposes. You can select to build SITL or non-SITL Meals
+  with the corresponding argument of the :func:`build <parasect.build>` API function.
+
+* ``hitl``: Marks the Meal for Hardware-In-The-Loop (HITL). In some output formats (e.g. PX4), this affects the output filename.
+
+* ``parent``: Adds a reference to another Meal, to be used as a parent for the current Meal. For more information see section `Parent Meals`_.
+
+* ``remove_calibration``: Removes the Calibration Dish Ingredients from this Meal. **Strongly** recommended to be set to ``true``.
+
+* ``remove_operator``: Removes the Operator Dish Ingredients from this Meal. **Strongly** recommended to be set to ``true``.
+
+* ``add_new``: Allows the addition of Ingredients that are **not stated** in the default parameter set (or the parent,
+  if one is specified).
+
+* ``frame_id``: This is applicable to PX4 output formats. It sets the ``SYS_AUTOSTART`` parameter.
+
+Parent Meals
+------------
+
+Sometimes you want to specify a base Meal (parameter set) and then a bunch more that are basically identical
+to that first one, except for very few changes.
+One such example is wanting a basic parameter set and then additional vehicles with adjustments to the values of certain
+parameters.
+Another example is wanting additional Meal variations configuring a camera mount or a secondary radio.
+
+Instead of re-specifying an identical Meal with the additional Dishes you can specify the base Meal as the
+``parent`` of the new Meals and specify **only the additional** Dishes.
+
+The Default Parameter set is not used for the child-Meals. The parameter set of the parent is used instead.
+Editing the parent Ingredients is thus always possible, but to add new parameters that don't exist in the parent Meal
+you will need to also set ``add_new`` to ``true``.

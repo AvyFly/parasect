@@ -19,7 +19,7 @@ CLI Usage
 ---------
 
 The primary way of using *Parasect* is as a command-line tool.
-It provides two functions, ``compare`` and ``build``.
+It provides two functions, :func:`compare <parasect.compare>` and :func:`build <parasect.build>`.
 
 It is strongly recommended that you first read the `Concepts`_ that *Parasect* employs, if you plan to make full use of it.
 
@@ -95,7 +95,7 @@ Partial output of `our example Meal Menu <example generic test_>`_, on .csv form
 API Usage
 ---------
 
-*Parasect* also exposes an API for the ``compare`` and ``build`` commands, that can be useful in project automation.
+*Parasect* also exposes an API for the :func:`compare <parasect.compare>` and :func:`build <parasect.build>` commands, that can be useful in project automation.
 Their arguments are identical to their CLI counterparts.
 
 See the :ref:`api_reference` for the full documentation.
