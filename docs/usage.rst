@@ -5,6 +5,7 @@ Usage
 .. _Reference: reference.html
 .. _MAVLink: https://mavlink.io/en/
 .. _Menu Creation: usage_create_menu.html
+.. _Setting Paths: usage_set_paths.html
 .. _example generic test: https://github.com/AvyFly/parasect/tree/master/tests/assets/generic/menu
 
 .. toctree::
@@ -12,6 +13,7 @@ Usage
    :maxdepth: 1
 
    usage_create_menu
+   usage_set_paths
 
 .. seealso:: A full reference of the CLI and the API is available `here <Reference_>`_.
 
@@ -62,7 +64,8 @@ Typically it is not desirable to show the differences in calibration or operatio
 ``compare`` offers additional flags to filter out such parameters.
 
 First `create your Meals Menu <Menu Creation_>`_, filling in at least your *calibration* and *operator* *Dishes*.
-Then, you can filter out the calibration parameters by
+Then `learn how to point *Parasect* to it <Setting Paths_>`_.
+Finally, you can filter out the calibration parameters by
 
 .. code:: console
 
@@ -81,7 +84,8 @@ Build
 
 *Parasect* can generate parameter sets for your autopilot or fleet of autopilots.
 
-First `create your Meals Menu <Menu Creation_>`_. Then, you can generate the parameter sets for all your vehicles with
+First `create your Meals Menu <Menu Creation_>`_.
+Then, you can generate the parameter sets for all your vehicles with
 
 .. code:: console
 
@@ -90,12 +94,12 @@ First `create your Meals Menu <Menu Creation_>`_. Then, you can generate the par
 Partial output of `our example Meal Menu <example generic test_>`_, on .csv format:
 
 .. literalinclude:: assets/generic_menu_csv/full_meal.csv
-   :language: csv
 
 API Usage
 ---------
 
-*Parasect* also exposes an API for the :func:`compare <parasect.compare>` and :func:`build <parasect.build>` commands, that can be useful in project automation.
+*Parasect* also exposes an API for the :func:`compare <parasect.compare>` and :func:`build <parasect.build>` commands,
+that can be useful in project automation.
 Their arguments are identical to their CLI counterparts.
 
 See the :ref:`api_reference` for the full documentation.
