@@ -5,6 +5,7 @@ To fully utilize the capabilities of *Parasect*, you will need to specify certai
 autopilot configuration. This comes down to creating a folder structure that represents your *Meals Menu*.
 
 .. _Concepts: concepts.html
+.. _Setting Paths: usage_set_paths.html
 .. _MAVLink: https://mavlink.io/en/
 .. _example px4 test: https://github.com/AvyFly/parasect/tree/master/tests/assets/px4/menu
 .. _example generic test: https://github.com/AvyFly/parasect/tree/master/tests/assets/generic/menu
@@ -17,6 +18,9 @@ autopilot configuration. This comes down to creating a folder structure that rep
    Refer to it while following this guide.
 
 First, create your main *Parasect* input folder, which we'll call ``menu`` for now (the actual folder name isn't important).
+You can place this folder anywhere in your system.
+You will point *Parasect* to it later.
+
 By the end of this guide, its tree will look something like this:
 
 .. literalinclude:: assets/generic_menu.txt
@@ -81,9 +85,9 @@ Within the ``custom_dishes`` folder, create as many Dish ``.yaml`` files as you 
 In each Dish file, start by defining your Common Ingredients as a list of triplets, just as in ``calibration.yaml`` and ``operator.yaml``.
 Each triplet refers to a single parameter and its contents are:
 
-1. The parameter name.
-2. The parameter value.
-3. A justification string, to remind you why you chose to fix this parameter and why selected this particular value. Can be set to None (``~``).
+#. The parameter name.
+#. The parameter value.
+#. A justification string, to remind you why you chose to fix this parameter and why selected this particular value. Can be set to None (``~``).
 
 If you plan to generate only one Meal (a single parameter set), then put all your parameter definitions here.
 Otherwise, put in the Common Ingredients **only** those parameters who are common across all of your Meals.
@@ -153,3 +157,5 @@ Instead of re-specifying an identical Meal with the additional Dishes you can sp
 The Default Parameter set is not used for the child-Meals. The parameter set of the parent is used instead.
 Editing the parent Ingredients is thus always possible, but to add new parameters that don't exist in the parent Meal
 you will need to also set ``add_new`` to ``true``.
+
+.. seealso:: Now that you have created your Meals Menu, find out how to point *Parasect* to it in `Setting Paths`_.
