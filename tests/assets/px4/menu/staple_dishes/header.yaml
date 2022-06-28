@@ -1,5 +1,34 @@
 formats:
-  px4af:
+  px4afv1:
+    common:
+      - "#!/bin/sh"
+      - "#"
+      - "# @name Generic Quadplane VTOL"
+      - "#"
+      - "# @type Standard VTOL"
+      - "# @class VTOL"
+      - "#"
+      - "# @maintainer"
+      - "#"
+      - "# @output MAIN1 motor 1"
+      - "# @output MAIN2 motor 2"
+      - "# @output MAIN3 motor 3"
+      - "# @output MAIN4 motor 4"
+      - "# @output AUX1 Aileron 1"
+      - "# @output AUX2 Aileron 2"
+      - "# @output AUX3 Elevator"
+      - "# @output AUX4 Rudder"
+      - "# @output AUX5 Throttle"
+      - "#"
+      - "# @board px4_fmu-v2 exclude"
+      - "# @board bitcraze_crazyflie exclude"
+      - "# @board holybro_kakutef7 exclude"
+      - "#"
+      - ""
+      - ". ${R}etc/init.d/rc.vtol_defaults"
+      - ""
+
+  px4afv2:
     common:
       - "#!/bin/sh"
       - "#"

@@ -134,7 +134,7 @@ class ConfigPaths(Borg):
         if self.CUSTOM_PATH:
             if not Path(self.CUSTOM_PATH).is_dir():
                 raise NotADirectoryError(
-                    "Given configuration path {self.CUSTOM_PATH} doesn't exist"
+                    f"Given configuration path {self.CUSTOM_PATH} doesn't exist"
                 )
             configs_path = self.CUSTOM_PATH
 
@@ -187,8 +187,13 @@ class Formats(Enum):
     """Supported output formats."""
 
     csv = "csv"
+    """Simple parameter name, value .csv file."""
     px4 = "px4"
-    px4af = "px4af"
+    """QGroundControl-style parameter file."""
+    px4afv1 = "px4afv1"
+    """Legacy PX4 airframe file, prior to version 1.11."""
+    px4afv2 = "px4afv2"
+    """New PX4 airframe file, version 1.11 and later."""
 
 
 ReservedOptions = Literal[
@@ -212,7 +217,7 @@ class Substances(BaseModel):
     Each is made up by its name, its value and a justification.
     """
 
-    __root__: List[Tuple[str, Optional[Union[int, float]], Optional[str]]]
+    __root__: List[Tuple[str, Optional[Union[float, int]], Optional[str]]]
 
     def __iter__(self):
         """Return an interable of the model."""
@@ -409,7 +414,7 @@ class Parameter:
 
     name: str
     param_type: Optional[str]  # String, either FLOAT or INT32
-    value: Union[int, float]
+    _value: Union[int, float]
     reasoning = None
     short_desc = None
     long_desc = None
@@ -438,6 +443,19 @@ class Parameter:
         self.param_type = param_type
         self.vid = vid
         self.cid = cid
+
+    @property
+    def value(self) -> Union[int, float]:
+        """Getter for parameter value."""
+        if self.param_type == "INT32":
+            return int(self._value)
+        else:
+            return self._value
+
+    @value.setter
+    def value(self, new_value: Union[int, float]) -> None:
+        """Setter for parameter value."""
+        self._value = new_value
 
     def __str__(self) -> str:
         """__str__ dunder method."""

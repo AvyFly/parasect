@@ -89,7 +89,7 @@ def compare(
     "--format",
     default=Formats.px4.value,
     type=click.Choice([format.value for format in Formats], case_sensitive=False),
-    help="Select autopilot format. PX4 parameters | PX4 airframe file | Ardupilot parameters",
+    help="Select autopilot format. Read the documentation of :class:`~parasect._helpers.Formats` for more information.",
 )
 @click.option(
     "-i",

@@ -97,7 +97,7 @@ class TestBuild:
         with runner.isolated_filesystem():
             parasect.build(
                 meal_ordered=None,
-                format=parasect._helpers.Formats.px4af,
+                format=parasect._helpers.Formats.px4afv2,
                 input_folder=str(utils.PX4_INPUT_FOLDER),
                 default_params=str(utils.PX4_DEFAULT_PARAMS_XML),
                 output_folder="output_folder",
@@ -115,7 +115,7 @@ class TestBuild:
                     "-o",
                     "output_folder",
                     "-f",
-                    "px4af",
+                    "px4afv2",
                     "-i",
                     str(utils.PX4_INPUT_FOLDER),
                     "-d",

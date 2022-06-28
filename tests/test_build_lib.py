@@ -61,6 +61,19 @@ class TestMeal:
         assert param in light_meal.param_list
         assert "UNOBTAINIUM" not in light_meal.param_list
 
+    def test_floats(self, setup_generic, build_meals):
+        """Make sure floats are correctly parsed from the recipe."""
+        light_meal = build_meals["light_meal"]
+        assert light_meal.param_list["OIL"].value == 0.5
+
+    def test_floats_2(self, setup_px4, build_meals):
+        """Make sure floats are correctly parsed from the recipe, when overwriting default values."""
+        vtol_1 = build_meals["my_vtol_1"]
+        assert (
+            str(vtol_1.param_list["BAT1_V_EMPTY"]) == "BAT1_V_EMPTY     (F):\t3.300000"
+        )
+        assert vtol_1.param_list["BAT1_V_EMPTY"].value == 3.3
+
 
 class TestExport:
     """Testing the export functionalities."""
@@ -68,14 +81,14 @@ class TestExport:
     def test_header(self, setup_generic, build_meals):
         """Test if the headers are generated correctly."""
         light_meal = build_meals["light_meal"]
-        gen = light_meal.export_to_px4af()
+        gen = light_meal.export_to_px4afv1()
         line1 = next(gen)
         assert line1.startswith("# Parameter file")
 
     def test_variant(self, setup_generic, build_meals):
         """Test if the variants are generated correctly."""
         full_meal = build_meals["full_meal"]
-        gen = full_meal.export_to_px4af()
+        gen = full_meal.export_to_px4afv1()
         lines = list(gen)
         assert lines[-1].startswith("Remember")
 
@@ -92,6 +105,27 @@ class TestExport:
         gen = vtol_1.export_to_px4()
         lines = list(gen)
         assert lines[0].startswith("# Onboard parameters")
+
+    def test_export_px4afv1(self, setup_px4, build_meals):
+        """Test if exports to legacy PX4 airframe format work as expected."""
+        vtol_1 = build_meals["my_vtol_1"]
+        gen = vtol_1.export_to_px4afv1()
+        lines = list(gen)
+        assert "param set " in lines[27]
+
+    def test_export_px4afv2(self, setup_px4, build_meals):
+        """Test if exports to new-style PX4 airframe file format work as expected."""
+        vtol_1 = build_meals["my_vtol_1"]
+        gen = vtol_1.export_to_px4afv2()
+        lines = list(gen)
+        assert "param set-default " in lines[27]
+
+    def test_export_px4af_unsupported(self, setup_px4, build_meals):
+        """Test exception when passing invalid PX4 airframe version."""
+        vtol_1 = build_meals["my_vtol_1"]
+        with pytest.raises(ValueError):
+            gen = vtol_1.export_to_px4af(3)
+            list(gen)
 
     def test_export(self, setup_px4, build_meals):
         """Test if the export method works as expected."""
@@ -119,7 +153,7 @@ class TestBuildFilename:
     def test_px4af(self, build_meals):
         """Test the px4 airframe format."""
         name = build_lib.build_filename(
-            _helpers.Formats.px4af, build_meals["light_meal"]
+            _helpers.Formats.px4afv1, build_meals["light_meal"]
         )
         assert name == "1_light_meal"
 
@@ -147,7 +181,7 @@ class TestBuildHelper:
         path = tmp_path
         build_lib.build_helper(
             meal_ordered="my_vtol_1",
-            format=_helpers.Formats.px4af,
+            format=_helpers.Formats.px4afv1,
             input_folder=str(_helpers.ConfigPaths().path),
             default_params=str(_helpers.ConfigPaths().default_parameters),
             output_folder=str(path),
@@ -160,7 +194,7 @@ class TestBuildHelper:
         path = tmp_path
         build_lib.build_helper(
             meal_ordered="my_vtol_1",
-            format=_helpers.Formats.px4af,
+            format=_helpers.Formats.px4afv1,
             input_folder=None,
             default_params=None,
             output_folder=str(path),

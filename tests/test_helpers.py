@@ -150,6 +150,18 @@ class TestParameterGeneric:
         param.param_type = "FLOAT"
         assert param.get_pretty_value() == "1.0"
 
+    def test_int_type(self):
+        """Test that in an INT32 parameter a float is cast into an int."""
+        param = _helpers.Parameter("TEMP", 1, "INT32")
+        param.value = 2.2
+        assert param.get_pretty_value() == "2"
+
+    def test_int_type_2(self):
+        """Test that in a FLOAT parameter an int is cast into an float."""
+        param = _helpers.Parameter("TEMP", 1, "FLOAT")
+        param.value = 2
+        assert param.get_pretty_value() == "2.0"
+
 
 @pytest.mark.usefixtures("setup_generic")
 class TestParameterList:
