@@ -61,6 +61,19 @@ class TestMeal:
         assert param in light_meal.param_list
         assert "UNOBTAINIUM" not in light_meal.param_list
 
+    def test_floats(self, setup_generic, build_meals):
+        """Make sure floats are correctly parsed from the recipe."""
+        light_meal = build_meals["light_meal"]
+        assert light_meal.param_list["OIL"].value == 0.5
+
+    def test_floats_2(self, setup_px4, build_meals):
+        """Make sure floats are correctly parsed from the recipe, when overwriting default values."""
+        vtol_1 = build_meals["my_vtol_1"]
+        assert (
+            str(vtol_1.param_list["BAT1_V_EMPTY"]) == "BAT1_V_EMPTY     (F):\t3.300000"
+        )
+        assert vtol_1.param_list["BAT1_V_EMPTY"].value == 3.3
+
 
 class TestExport:
     """Testing the export functionalities."""

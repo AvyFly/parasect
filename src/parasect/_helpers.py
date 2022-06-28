@@ -217,7 +217,7 @@ class Substances(BaseModel):
     Each is made up by its name, its value and a justification.
     """
 
-    __root__: List[Tuple[str, Optional[Union[int, float]], Optional[str]]]
+    __root__: List[Tuple[str, Optional[Union[float, int]], Optional[str]]]
 
     def __iter__(self):
         """Return an interable of the model."""
@@ -414,7 +414,7 @@ class Parameter:
 
     name: str
     param_type: Optional[str]  # String, either FLOAT or INT32
-    value: Union[int, float]
+    _value: Union[int, float]
     reasoning = None
     short_desc = None
     long_desc = None
@@ -443,6 +443,19 @@ class Parameter:
         self.param_type = param_type
         self.vid = vid
         self.cid = cid
+
+    @property
+    def value(self) -> Union[int, float]:
+        """Getter for parameter value."""
+        if self.param_type == "INT32":
+            return int(self._value)
+        else:
+            return self._value
+
+    @value.setter
+    def value(self, new_value: Union[int, float]) -> None:
+        """Setter for parameter value."""
+        self._value = new_value
 
     def __str__(self) -> str:
         """__str__ dunder method."""
