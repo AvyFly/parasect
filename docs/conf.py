@@ -26,7 +26,7 @@ html_theme = "furo"
 parasect_src_path = Path(__file__).parent.parent.resolve()
 docs_assets_path = parasect_src_path / "docs" / "assets"
 generic_menu_path = parasect_src_path / "tests" / "assets" / "generic" / "menu"
-del os.environ["PARASECT_DEFAULTS"]
+os.environ.pop("PARASECT_DEFAULTS", None)
 parasect.build(
     None,
     parasect.Formats("csv"),
