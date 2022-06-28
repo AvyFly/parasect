@@ -630,12 +630,22 @@ class Meal:
             cid = self.param_list[param_name].cid
             yield f"{vid}\t{cid}\t{param_name}\t{param_value}\t{param_type}\n"
 
-    def export_to_px4af(self) -> Generator[str, None, None]:
-        """Export as PX4 airframe file."""
+    def export_to_px4af(self, version: int) -> Generator[str, None, None]:
+        """PX4 airframe file build helper."""
+        # Diversivy versions
+        if version == 1:
+            directive = "set"
+            dish = "px4afv1"
+        elif version == 2:
+            directive = "set-default"
+            dish = "px4afv2"
+        else:
+            raise ValueError(f"PX4 aiframe version {version} not supported.")
+
         # Read header
         get_logger().debug("Loading parameter header.")
         header_dish = get_boilerplate(ConfigPaths().staple_dishes, "header")
-        yield from self.build_header_footer(header_dish, self.header, "px4af")
+        yield from self.build_header_footer(header_dish, self.header, dish)
 
         if not self.is_sitl:
             indentation = "\t"
@@ -646,12 +656,26 @@ class Meal:
         for param_name in param_names:
             param_value = self.param_list[param_name].get_pretty_value()
 
-            yield f"{indentation}param set-default {param_name} {param_value}\n"
+            yield f"{indentation}param {directive} {param_name} {param_value}\n"
 
         # Read footer
         get_logger().debug("Loading parameter footer.")
         footer_dict = get_boilerplate(ConfigPaths().staple_dishes, "footer")
-        yield from self.build_header_footer(footer_dict, self.footer, "px4af")
+        yield from self.build_header_footer(footer_dict, self.footer, dish)
+
+    def export_to_px4afv1(self) -> Generator[str, None, None]:
+        """Export as legacy PX4 airframe file.
+
+        Utilizes the 'param set' directive.
+        """
+        yield from self.export_to_px4af(1)
+
+    def export_to_px4afv2(self) -> Generator[str, None, None]:
+        """Export as new-style PX4 airframe file.
+
+        Utilizes the 'param set-default' directive.
+        """
+        yield from self.export_to_px4af(2)
 
     def export_to_csv(self) -> Generator[str, None, None]:
         """Export as csv file."""
@@ -679,8 +703,10 @@ class Meal:
             return self.export_to_csv()
         elif format == Formats.px4:
             return self.export_to_px4()
-        elif format == Formats.px4af:
-            return self.export_to_px4af()
+        elif format == Formats.px4afv1:
+            return self.export_to_px4afv1()
+        elif format == Formats.px4afv2:
+            return self.export_to_px4afv2()
         else:
             raise ValueError(f"Output format {format} not supported.")
 
@@ -715,7 +741,7 @@ def build_filename(format: Formats, meal: Meal) -> str:
         return f"{meal.name}.csv"
     elif format == Formats.px4:
         return f"{meal.name}.params"
-    elif format == Formats.px4af:
+    elif format == Formats.px4afv1 or format == Formats.px4afv2:
         filename = f"{meal.frame_id}_{meal.name}"
         if meal.is_hitl:
             filename += ".hil"
@@ -752,7 +778,7 @@ def build_helper(
     if default_params:
         ConfigPaths().DEFAULT_PARAMS_PATH = Path(default_params)
         get_logger().debug(
-            f"Setting DEFAULT_PARAMS_OVERRIDE to {ConfigPaths().default_parameters}"
+            f"Setting DEFAULT_PARAMS override to {ConfigPaths().default_parameters}"
         )
 
     if isinstance(format, str):

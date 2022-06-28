@@ -15,6 +15,8 @@ In sum, there are two resources that the user might need to specify:
 Pointing to the Meals Menu folder
 ---------------------------------
 
+.. program:: parasect build
+
 By priority, pass the Meals Menu path in the :option:`--input_folder` (:option:`-i`)
 option of :func:`compare <parasect.compare>` or :func:`build <parasect.build>`.
 

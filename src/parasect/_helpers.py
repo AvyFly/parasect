@@ -134,7 +134,7 @@ class ConfigPaths(Borg):
         if self.CUSTOM_PATH:
             if not Path(self.CUSTOM_PATH).is_dir():
                 raise NotADirectoryError(
-                    "Given configuration path {self.CUSTOM_PATH} doesn't exist"
+                    f"Given configuration path {self.CUSTOM_PATH} doesn't exist"
                 )
             configs_path = self.CUSTOM_PATH
 
@@ -187,8 +187,13 @@ class Formats(Enum):
     """Supported output formats."""
 
     csv = "csv"
+    """Simple parameter name, value .csv file."""
     px4 = "px4"
-    px4af = "px4af"
+    """QGroundControl-style parameter file."""
+    px4afv1 = "px4afv1"
+    """Legacy PX4 airframe file, prior to version 1.11."""
+    px4afv2 = "px4afv2"
+    """New PX4 airframe file, version 1.11 and later."""
 
 
 ReservedOptions = Literal[

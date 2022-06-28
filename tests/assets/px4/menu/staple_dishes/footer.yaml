@@ -1,7 +1,14 @@
 common:
 
 formats:
-  px4af:
+  px4afv1:
+    common:
+      - "set MIXER quad_x"
+      - "set MIXER_AUX vtol_AAERT"
+      - ""
+      - "set PWM_OUT 1234"
+
+  px4afv2:
     common:
       - "set MIXER quad_x"
       - "set MIXER_AUX vtol_AAERT"

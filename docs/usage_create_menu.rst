@@ -66,7 +66,7 @@ The top-level dictionary does contain a Common section, that applies to all expo
 ``formats`` section.
 
 This reflects the available export :class:`~parasect._helpers.Formats` that *Parasect* offers (e.g. `px4` parameters
-and `px4af` for PX4 airframe files.)
+and `px4afv1` and `px4afv2` for PX4 airframe files.)
 
 Each named format then contains a ``common`` and ``variants`` section as usual, which you can refer to in your Meal.
 
