@@ -1,6 +1,8 @@
 Parasect
 ========
 
+.. badges-begin
+
 |PyPI| |Status| |Python Version| |License|
 
 |Read the Docs| |Tests| |Codecov|
@@ -35,9 +37,13 @@ Parasect
    :target: https://github.com/psf/black
    :alt: Black
 
+.. badges-end
+
 .. raw:: html
 
    <p align="center"><img alt="logo" src="docs/_static/logo.svg" width="50%" /></p>
+
+.. logo-end
 
 
 Welcome to *Parasect*, a utility for manipulating parameter sets for autopilots!
@@ -130,8 +136,8 @@ This project was generated from `@cjolowicz`_'s `Hypermodern Python Cookiecutter
 .. _Hypermodern Python Cookiecutter: https://github.com/cjolowicz/cookiecutter-hypermodern-python
 .. _file an issue: https://github.com/AvyFly/parasect/issues
 .. _pip: https://pip.pypa.io/
-.. _CLI usage: https://parasect.readthedocs.io/en/latest/usage.html
-.. _API usage: https://parasect.readthedocs.io/en/latest/reference.html
+.. _CLI usage: https://parasect.readthedocs.io/en/latest/reference.html#cli-reference
+.. _API usage: https://parasect.readthedocs.io/en/latest/reference.html#api-reference
 .. _Concepts: https://parasect.readthedocs.io/en/latest/concepts.html
 .. _PX4: https://px4.io/
 .. _Poetry: https://python-poetry.org/
