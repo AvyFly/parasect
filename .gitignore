@@ -2,6 +2,7 @@
 /.coverage
 /.coverage.*
 /.nox/
+/.venv/
 /.python-version
 /.pytype/
 /dist/

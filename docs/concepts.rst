@@ -14,7 +14,7 @@ The Menu is defined in the ``meals.yaml`` file where each Meal is named and repr
 
 *Example* ``meals.yaml`` *file:*
 
-.. literalinclude:: ../tests/assets/px4/menu/meals.yaml
+.. literalinclude:: ../tests/assets/generic/menu/meals.yaml
    :language: yaml
 
 The Meal is made up of **Dishes**. Each Dish represents a notional subset of the autopilot's parameters, which makes it

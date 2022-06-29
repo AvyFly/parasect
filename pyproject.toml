@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "parasect"
-version = "0.11.0"
+version = "0.11.1"
 description = "Parasect"
 authors = ["George Zogopoulos <geo.zogop.papal@gmail.com>"]
 license = "MIT"
