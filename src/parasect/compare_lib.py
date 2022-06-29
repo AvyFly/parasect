@@ -428,7 +428,20 @@ def compare_helper(
     noop: bool,
     component: Optional[int],
 ) -> str:
-    """Helper function for the comparison function."""
+    """Compare two parameter files.
+
+    Args:
+        file_1: The path to the first parameter file to compare.
+        file_2: The path to the second parameter file to compare.
+        input_folder: Necessary when the *nocal* and *noop* options are set.
+            The directory where the Meals Menu is created, containing at least the *calibration* and *operator* staple dishes.
+        nocal: Don't compare the calibration parameters.
+        noop: Don't compare the operator parameters.
+        component: Compare the parameters of a specific component. Refers to MAVLink-type Component IDs.
+
+    Returns:
+        A string with the comparison table contents.
+    """
     get_logger().debug(f"Comparing {file_1} and {file_2} for component {component}")
 
     if input_folder:

@@ -35,6 +35,10 @@ Parasect
    :target: https://github.com/psf/black
    :alt: Black
 
+.. raw:: html
+
+   <p align="center"><img alt="logo" src="docs/_static/logo.svg" width="50%" /></p>
+
 
 Welcome to *Parasect*, a utility for manipulating parameter sets for autopilots!
 

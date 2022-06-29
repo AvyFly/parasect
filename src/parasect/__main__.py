@@ -1,5 +1,6 @@
 """Command-line interface."""
 import cProfile
+from importlib.metadata import version
 from pstats import Stats
 from typing import Optional
 
@@ -17,6 +18,7 @@ from parasect.compare_lib import compare_helper
 
 @click.group()
 @click.option("--debug", is_flag=True, help="Generate log file.")
+@click.version_option(version("parasect"))
 def cli(debug: bool) -> None:
     """Main CLI entry point."""
     Logger(debug=debug)
@@ -30,7 +32,8 @@ def cli(debug: bool) -> None:
     "--input_folder",
     default=None,
     type=click.Path(exists=True),
-    help="Specify the folder from which to read configurations and parameters.",
+    help="The directory where the Meals Menu is created, containing at least the"
+    + " *calibration* and *operator* staple dishes. Necessary when the *nocal* and *noop* options are set.",
 )
 @click.option(
     "-s",
@@ -38,7 +41,7 @@ def cli(debug: bool) -> None:
     "nocal",
     is_flag=True,
     default=False,
-    help="Dont compare calibration parameters.",
+    help="Don't compare calibration parameters.",
 )
 @click.option(
     "-u",
@@ -46,14 +49,14 @@ def cli(debug: bool) -> None:
     "noop",
     is_flag=True,
     default=False,
-    help="Dont compare operator-selectable parameters.",
+    help="Don't compare operator-selectable parameters.",
 )
 @click.option(
     "-c",
     "--component",
     default=None,
     type=int,
-    help="Pass a specific component to compare",
+    help="Compare the parameters of a specific component. Refers to MAVLink-type Component IDs.",
 )
 def compare(
     file_1: str,
@@ -82,14 +85,14 @@ def compare(
     "config",
     default=None,
     type=str,
-    help="Specify a single configuration to build.",
+    help="Specify a single Meal to build.",
 )
 @click.option(
     "-f",
     "--format",
     default=Formats.px4.value,
     type=click.Choice([format.value for format in Formats], case_sensitive=False),
-    help="Select autopilot format. Read the documentation of :class:`~parasect._helpers.Formats` for more information.",
+    help="Select autopilot format. Read the documentation of :class:`~parasect.Formats` for more information.",
 )
 @click.option(
     "-i",
@@ -103,7 +106,7 @@ def compare(
     "--default_parameters",
     default=None,
     type=click.Path(exists=True),
-    help="Specify the default parameters file to apply to all recipes.",
+    help="Specify the default parameters file to apply to all Meals.",
 )
 def build(
     config: str,
