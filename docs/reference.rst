@@ -2,8 +2,8 @@ Reference
 =========
 
 
-Full CLI Reference
-------------------
+CLI Reference
+-------------
 
 .. click:: parasect.__main__:cli
    :prog: parasect

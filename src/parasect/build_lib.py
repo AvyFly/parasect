@@ -758,12 +758,21 @@ def build_helper(
     output_folder: Optional[str] = None,
     sitl: bool = False,
 ) -> None:
-    """Helper function for building parameter sets.
+    """Build parameter sets.
 
-    @param sitl:
-      None: disregard if recipe is for SITL
-      True: only generate SITL parameter files
-      False: do not generate SITL parameter files
+    Args:
+        meal_ordered: Specify which meal should be built. All meals specified in the menu will be built if left None.
+        format: The autopilot format to export as.
+        input_folder: The directory where the Meals Menu is created.
+        default_params: If set, this file will provide the full parameters set for all the Meals.
+        output_folder: The directory where the meals will be exported.
+        sitl: Filter for Meals marked as "sitl".
+            None: Disregard this meal keyword.
+            True: Only build "sitl" meals.
+            False: Don't build "sitl" meals.
+
+    Raises:
+        ValueError: If *meal_ordered* is None (hence all the meals will be exported) but no *output_folder* is specified.
     """
     meal_list: Optional[List[str]]
     if meal_ordered is not None:
