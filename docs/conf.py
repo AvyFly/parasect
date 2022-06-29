@@ -18,6 +18,7 @@ extensions = [
 ]
 autodoc_typehints = "description"
 html_theme = "furo"
+html_logo = "_static/logo.svg"
 
 ##############################################################################
 # Build assets
