@@ -1,10 +1,10 @@
 """Command-line interface."""
 import cProfile
+from importlib.metadata import version
 from pstats import Stats
 from typing import Optional
 
 import click
-import pkg_resources
 
 from parasect._helpers import Formats
 from parasect._helpers import Logger
@@ -18,7 +18,7 @@ from parasect.compare_lib import compare_helper
 
 @click.group()
 @click.option("--debug", is_flag=True, help="Generate log file.")
-@click.version_option(pkg_resources.get_distribution("parasect").version)
+@click.version_option(version("parasect"))
 def cli(debug: bool) -> None:
     """Main CLI entry point."""
     Logger(debug=debug)
