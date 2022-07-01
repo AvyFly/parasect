@@ -133,6 +133,11 @@ class TestParameterGeneric:
         with pytest.raises(TypeError):
             _helpers.cast_param_value("1", "0")
 
+    def test_wrong_type_2(self):
+        """Verify the correct error is raised when a None parameter type."""
+        with pytest.raises(TypeError):
+            _helpers.cast_param_value("1", None)
+
     def test_get_pretty_value_int_notype(self):
         """Verify that integer values are correctly deduced."""
         param = _helpers.Parameter("TEMP", 1)
@@ -224,12 +229,43 @@ class TestPX4ParamReaders:
         assert parameter_list["ASPD_BETA_NOISE"].group == "AIRSPEED VALIDATOR"
         assert parameter_list["ASPD_BETA_NOISE"].param_type == "FLOAT"
 
-    def test_qgc(self):
+    def test_qgc(self, tmp_path):
         """Test reading from a parameter file extracted from a .ulg via ulog_params."""
-        parameter_list = _helpers.read_params(utils.PX4_GAZEBO_PARAMS)
+        path = tmp_path
+        new_file = path / "edited.params"
+        old_fp = open(utils.PX4_GAZEBO_PARAMS)
+        old_lines = old_fp.readlines()
+        new_fp = open(new_file, "w")
+        new_fp.writelines(old_lines[0:50])
+        new_fp.writelines(["\n"])  # Insert a blank line
+        new_fp.writelines(old_lines[50:-1])  # Write the rest of the lines
+
+        parameter_list = _helpers.read_params(new_file)
         assert parameter_list["BAT_CRIT_THR"].value == pytest.approx(0.07)
+
+    def test_qgc_2(self, tmp_path):
+        """Verify that a GQC file without a string in the 3rd place will raise an error."""
+        path = tmp_path
+        new_file = path / "edited.params"
+        old_fp = open(utils.PX4_GAZEBO_PARAMS)
+        old_lines = old_fp.readlines()
+        new_fp = open(new_file, "w")
+        new_fp.writelines(old_lines[0:50])
+        new_fp.writelines(["1	1	42	1.000000000000000000	9"])  # Insert a wrong line
+        new_fp.writelines(old_lines[50:-1])  # Write the rest of the lines
+
+        with pytest.raises(SyntaxError):
+            _helpers.read_params(new_file)
 
     def test_ulog_params(self):
         """Test reading from a parameter file extracted from a .ulg via ulog_params."""
         parameter_list = _helpers.read_params(utils.PX4_ULOG_PARAMS_FILE)
         assert parameter_list["BAT1_A_PER_V"].value == pytest.approx(36.364)
+
+    def test_qgc_invalid(self):
+        """Verify that an exception is raised from malformed input."""
+        row = "1	1	ASPD_SCALE_1	1.000000000000000000	0".split(
+            "\t"
+        )  # Invalid parameter type
+        with pytest.raises(ValueError):
+            _helpers.build_param_from_qgc(row)
