@@ -38,7 +38,7 @@ class Borg(ABC):
     @property
     @abstractmethod
     def _shared_state(self):
-        pass
+        pass  # pragma: no cover
 
 
 class Logger(Borg):
@@ -547,7 +547,7 @@ class ParameterList:
         """Answer if the parameter list contains a parameter."""
         if isinstance(item, str):
             return item in self.params.keys()
-        if isinstance(item, Parameter):
+        else:  # item is Parameter
             return item.name in self.params.keys()
 
     def keys(self) -> KeysView:

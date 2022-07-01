@@ -39,9 +39,10 @@ Parasect
 
 .. badges-end
 
-.. raw:: html
-
-   <p align="center"><img alt="logo" src="docs/_static/logo.svg" width="50%" /></p>
+.. image:: docs/_static/logo.svg
+   :alt: parasect logo
+   :width: 320
+   :align: center
 
 .. logo-end
 
