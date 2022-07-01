@@ -19,9 +19,10 @@ The Menu is defined in the ``meals.yaml`` file where each Meal is named and repr
 
 The Meal is made up of **Dishes**. Each Dish represents a notional subset of the autopilot's parameters, which makes it
 easier to define and manage.
-In this case ``light_meal`` contains the Dishes ``dish_1``, ``dish_2``, ``header`` and ``footer``.
+In this case ``light_meal`` contains the Dishes ``salad``, ``meat_and_potatoes``, ``header`` and ``footer``.
+The rest of the key-value pairs will be explained later.
 
-Each Dish contains a **common** **Recipe**, which specifies which **Ingredients** make up the Dish, as well as a list
+Each Dish is defined in a separate file and contains a **common** **Recipe**, which specifies which **Ingredients** make up the Dish, as well as a list
 of **Allergens** that should not exist in the Dish.
 
 Furthermore, one or more Dish **Variants** can be specified in the Dish file, which are specializations of the common Recipe.
@@ -32,9 +33,10 @@ In the Meal dictionary, the Dish names are defined in the dictionary key, while 
 If no Variant is specified (the value is set to ``~``, i.e. ``None``) then the ``common`` Recipe is used.
 On the contrary, a value of ``variant_1/subvariant_a`` signifies that the Meals needs to be specialized with Variant Recipes.
 
-*Example Dish file:*
+*Example: salad Dish file:*
 
-TODO
+.. literalinclude:: ../tests/assets/generic/menu/custom_dishes/salad.yaml
+   :language: yaml
 
 The user is free to create as many Custom Dishes he wants under the ``custom_dishes`` folder and then refer to them
 in ``meals.yaml``. Not all Meals need to refer to all available Dishes.
