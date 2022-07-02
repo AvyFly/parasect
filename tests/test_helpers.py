@@ -221,13 +221,33 @@ class TestParameterList:
 class TestPX4ParamReaders:
     """Test the various PX4 parameter file decoders."""
 
-    def test_xml(self, setup_px4):  # noqa: F811 # setup_px4 is a fixture
+    def test_xml(self, setup_px4, tmp_path):  # noqa: F811 # setup_px4 is a fixture
         """Test reading from an XML parameters definition file."""
-        parameter_list = _helpers.read_params(utils.PX4_DEFAULT_PARAMS_XML)
+        # Add a parameter outside of a group
+        new_entry = [
+            '<parameter name="UNGROUPED_PARAM" default="-1" type="INT32">\n',
+            "<short_desc>A parameter outside of a group</short_desc>\n",
+            "<long_desc>Added for testing purposes.</long_desc>\n",
+            "<min>-1</min>\n",
+            "<max>1</max>\n",
+            "</parameter>\n",
+        ]
+        path = tmp_path
+        new_file = path / "edited.params"
+        old_fp = open(utils.PX4_DEFAULT_PARAMS_XML)
+        old_lines = old_fp.readlines()
+        new_fp = open(new_file, "a")
+        new_fp.writelines(old_lines[0:-1])  # Stop right before the </parameters> tag
+        new_fp.writelines(new_entry)
+        new_fp.writelines(["</parameters>"])
+        new_fp.close()
+
+        parameter_list = _helpers.read_params(new_file)
         # Test if the parameter exists, is in the correct group and has the correct type and value
         assert parameter_list["ASPD_BETA_NOISE"].value == pytest.approx(0.3)
         assert parameter_list["ASPD_BETA_NOISE"].group == "AIRSPEED VALIDATOR"
         assert parameter_list["ASPD_BETA_NOISE"].param_type == "FLOAT"
+        assert "UNGROUPED_PARAM" in parameter_list
 
     def test_qgc(self, tmp_path):
         """Test reading from a parameter file extracted from a .ulg via ulog_params."""
@@ -235,10 +255,11 @@ class TestPX4ParamReaders:
         new_file = path / "edited.params"
         old_fp = open(utils.PX4_GAZEBO_PARAMS)
         old_lines = old_fp.readlines()
-        new_fp = open(new_file, "w")
+        new_fp = open(new_file, "a")
         new_fp.writelines(old_lines[0:50])
         new_fp.writelines(["\n"])  # Insert a blank line
         new_fp.writelines(old_lines[50:-1])  # Write the rest of the lines
+        new_fp.close()
 
         parameter_list = _helpers.read_params(new_file)
         assert parameter_list["BAT_CRIT_THR"].value == pytest.approx(0.07)
@@ -251,21 +272,78 @@ class TestPX4ParamReaders:
         old_lines = old_fp.readlines()
         new_fp = open(new_file, "w")
         new_fp.writelines(old_lines[0:50])
-        new_fp.writelines(["1	1	42	1.000000000000000000	9"])  # Insert a wrong line
+        new_fp.writelines(["1	1	42	1.000000000000000000	9\n"])  # Insert a wrong line
         new_fp.writelines(old_lines[50:-1])  # Write the rest of the lines
+        new_fp.close()
 
-        with pytest.raises(SyntaxError):
-            _helpers.read_params(new_file)
+        with pytest.raises(SyntaxError) as exc_info:
+            _helpers.read_params_qgc(new_file)
+        assert str(exc_info.value) == "Third element must be a parameter name string"
 
-    def test_ulog_params(self):
+    def test_qgc_3(self, tmp_path):
+        """Verify that a GQC file with an invalid parameter type enum raises an error."""
+        path = tmp_path
+        new_file = path / "edited.params"
+        new_fp = open(new_file, "w")
+        new_fp.writelines(["1	1	MY_PARAM	1.0	42\n"])  # Insert a wrong line
+        new_fp.close()
+
+        with pytest.raises(ValueError) as exc_info:
+            _helpers.read_params_qgc(new_file)
+        assert str(exc_info.value) == "Unknown parameter type: 42"
+
+    def test_qgc_empty(self, tmp_path):
+        """Verify that an exception is raised from empty input."""
+        path = tmp_path
+        new_file = path / "edited.params"
+        with open(new_file, "w") as new_fp:
+            new_fp.writelines(
+                ["#1	1	ASPD_SCALE_1	1.000000000000000000	0\n"]
+            )  # Insert a commented-out line
+        with pytest.raises(SyntaxError) as exc_info:
+            _helpers.read_params_qgc(new_file)
+        assert str(exc_info.value) == "Could not extract any parameter from file."
+
+    def test_ulog_param(self):
         """Test reading from a parameter file extracted from a .ulg via ulog_params."""
         parameter_list = _helpers.read_params(utils.PX4_ULOG_PARAMS_FILE)
         assert parameter_list["BAT1_A_PER_V"].value == pytest.approx(36.364)
 
-    def test_qgc_invalid(self):
-        """Verify that an exception is raised from malformed input."""
-        row = "1	1	ASPD_SCALE_1	1.000000000000000000	0".split(
-            "\t"
-        )  # Invalid parameter type
-        with pytest.raises(ValueError):
-            _helpers.build_param_from_qgc(row)
+    def test_ulog_param_2(self, tmp_path):
+        """Verify that a ulog file with a number in the first position raises an exception."""
+        path = tmp_path
+        new_file = path / "edited.params"
+        old_fp = open(utils.PX4_ULOG_PARAMS_FILE)
+        old_lines = old_fp.readlines()
+        new_fp = open(new_file, "w")
+        new_fp.writelines(old_lines[0:50])
+        new_fp.writelines(["42, 0\n"])  # Insert a wrong line
+        new_fp.writelines(old_lines[50:-1])  # Write the rest of the lines
+        new_fp.close()
+        with pytest.raises(SyntaxError) as exc_info:
+            _helpers.read_params_ulog_param(new_file)
+        assert (
+            str(exc_info.value) == "First row element must be a parameter name string"
+        )
+
+    def test_ulog_param_empty(self, tmp_path):
+        """Verify that an exception is raised from empty input."""
+        path = tmp_path
+        new_file = path / "edited.params"
+        with open(new_file, "w") as new_fp:
+            new_fp.writelines([])  # Insert empty file
+        with pytest.raises(SyntaxError) as exc_info:
+            _helpers.read_params_ulog_param(new_file)
+        assert str(exc_info.value) == "Could not extract any parameter from file."
+
+    def test_unknown_protocol(self, tmp_path):
+        """Verify an exception is thrown if the file protocol is unknown."""
+        path = tmp_path
+        new_file = path / "wrong.params"
+        content = ["Bad line1\n", "Plus some, numbers\n"]
+        new_fp = open(new_file, "w")
+        new_fp.writelines(content)
+        new_fp.close()
+        with pytest.raises(SyntaxError) as exc_info:
+            _helpers.read_params(new_file)
+        assert str(exc_info.value) == "Could not recognize log protocol."
