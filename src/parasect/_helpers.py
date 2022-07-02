@@ -617,7 +617,12 @@ def build_param_from_qgc(row: List[str]) -> Parameter:
     get_logger().debug(f"Decoding parameter file row: {row}")
     vehicle_id = int(row[0])
     componenent_id = int(row[1])
-    param_name = row[2]
+    # Test if parameter name is a number
+    try:
+        float(row[2])
+        raise SyntaxError("Third element must be a parameter name string")
+    except ValueError:
+        param_name = row[2]
     param_type_num = int(row[4])
     if param_type_num == 6:
         param_type = "INT32"
@@ -720,14 +725,11 @@ def read_params_qgc(filepath: Path) -> ParameterList:
             # Test for wrong number of elements
             if len(param_row) != 5:
                 raise SyntaxError("Wrong number of line elements")
-            # Test if 3rd element is a string
-            try:
-                float(param_row[2])
-                raise SyntaxError("First element must be a parameter name string")
-            except ValueError:
-                pass
             param = build_param_from_qgc(param_row)
             param_list.add_param(param)
+
+    if len(param_list.params) == 0:
+        raise (SyntaxError("Could not extract any parameter from file."))
 
     return param_list
 
@@ -747,11 +749,14 @@ def read_params_ulog_param(filepath: Path) -> ParameterList:
             # Check if first element is a string
             try:
                 float(param_row[0])
-                raise SyntaxError("First element must be a parameter name string")
+                raise SyntaxError("First row element must be a parameter name string")
             except ValueError:
                 pass
             param = build_param_from_ulog_params(param_row)
             param_list.add_param(param)
+
+    if len(param_list.params) == 0:
+        raise (SyntaxError("Could not extract any parameter from file."))
 
     return param_list
 
