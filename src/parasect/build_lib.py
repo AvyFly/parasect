@@ -90,10 +90,10 @@ class Dish:
             if common_recipe is not None:
                 get_logger().debug(f"Parsing {model} common parameters")
                 self.parse_recipe(common_recipe)
-                # Load serial number parameters
-                if sn is not None:
-                    sn_recipe = self.get_sn_recipe(model, variant_model, sn)
-                    self.parse_recipe(sn_recipe)
+            # Load serial number parameters
+            if sn is not None:
+                sn_recipe = self.get_sn_recipe(model, variant_model, sn)
+                self.parse_recipe(sn_recipe)
         else:
             pass
 

@@ -49,6 +49,56 @@ class TestDish:
         assert param in dish.param_list
         assert "UNOBTAINIUM" not in dish.param_list
 
+    def test_no_variant(self):
+        """Test that a Dish without a variant can be parsed."""
+        model = _helpers.DishModel.parse_obj(
+            {"common": {"ingredients": [["ING1", 1, ""]]}, "variants": None}
+        )
+        dish = build_lib.Dish(
+            model, "var1"
+        )  # Ask for a varient even if it doesn't exist
+        assert "ING1" in dish
+
+    def test_empty_variant(self):
+        """Test that a variant with no common section is properly handled.
+
+        Its sub-variants still exist in this test case.
+        """
+        model = _helpers.DishModel.parse_obj(
+            {
+                "common": None,
+                "variants": {
+                    "var1": {
+                        "variants": {
+                            "var2": {"common": {"ingredients": [["ING1", 1, ""]]}}
+                        }
+                    }
+                },
+            }
+        )
+        dish = build_lib.Dish(model, "var1", "var2")
+        assert "ING1" in dish
+
+    def test_bad_variant(self):
+        """Verify that an exception is raised when asking for a non-existing variant."""
+        model = _helpers.DishModel.parse_obj(
+            {
+                "common": None,
+                "variants": {
+                    "var1": {
+                        "variants": {
+                            "var2": {"common": {"ingredients": [["ING1", 1, ""]]}}
+                        }
+                    }
+                },
+            }
+        )
+        with pytest.raises(
+            KeyError,
+            match="The variant var3 is not found in the parameter list of <class 'parasect.build_lib.Dish'>",
+        ):
+            build_lib.Dish(model, "var3")
+
 
 class TestMeal:
     """Test the Meal class."""
