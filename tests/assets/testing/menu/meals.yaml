@@ -1,0 +1,10 @@
+sitl_meal:
+  dish_1: ~
+  sitl: true
+
+hitl_meal:
+  dish_1: ~
+  hitl: true
+
+empty_subvariants:
+  dish_1: var1/sar1

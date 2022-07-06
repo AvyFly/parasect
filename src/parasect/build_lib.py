@@ -91,7 +91,7 @@ class Dish:
                 get_logger().debug(f"Parsing {model} common parameters")
                 self.parse_recipe(common_recipe)
             # Load serial number parameters
-            if sn is not None:
+            if sn:
                 sn_recipe = self.get_sn_recipe(model, variant_model, sn)
                 self.parse_recipe(sn_recipe)
         else:
@@ -128,69 +128,42 @@ class Dish:
             else:
                 return Recipe()
         else:
-            return Recipe()
+            raise SyntaxError(
+                f"Tried to request subvariant {sn} but no subvariants are specified."
+            )
 
-    def parse_recipe(self, recipe: Recipe, overwrite: bool = False) -> None:
+    def parse_recipe(self, recipe: Recipe) -> None:
         """Parse a dictionary with parameters.
 
         Accepts a dict with contents:
         a "blacklist" dict (optional): a dictionary with keys "groups" and "parameters" with a parameter list
         inside of it, in case this is a blacklist class
         a "parameters" dict (optional): list of parameter items for normal parameter classes
-        "overwrite" allows overwriting existing parameters found in the lists
         """
         # Read blacklist if exists
         if recipe.allergens:
-            self.parse_allergens(recipe.allergens, overwrite)
+            self.parse_allergens(recipe.allergens)
 
         # Read edited parameters
         if recipe.ingredients:
-            self.parse_substances(recipe.ingredients, self.param_list, overwrite)
+            self.parse_substances(recipe.ingredients, self.param_list)
 
-    def parse_allergens(self, black_list: Allergens, overwrite: bool) -> None:
+    def parse_allergens(self, black_list: Allergens) -> None:
         """Parse the black list and group blacklist."""
         # Read all blacklisted groups
-        try:
-            get_logger().debug("Parsing blacklisted groups")
-            self.parse_substances(
-                black_list.groups, self.black_groups, overwrite=overwrite
-            )
-        except KeyError:
-            pass
+        get_logger().debug("Parsing blacklisted groups")
+        self.parse_substances(black_list.groups, self.black_groups)
         # Read all blacklisted params
-        try:
-            get_logger().debug("Parsing blacklisted parameters")
-            self.parse_substances(
-                black_list.substances, self.black_params, overwrite=overwrite
-            )
-        except KeyError:
-            pass
-
-    # def to_recipe(self) -> Recipe:
-    #     """Convert the ParameterClass to a dictionary."""
-    #     recipe = Recipe()
-    #     recipe.ingredients = [
-    #         (param.name, param.value, param.reasoning) for param in self.param_list
-    #     ]
-    #     recipe.allergens.groups = [
-    #         (param.name, param.value, param.reasoning) for param in self.black_groups
-    #     ]
-    #     recipe.allergens.substances = [
-    #         (param.name, param.value, param.reasoning) for param in self.black_params
-    #     ]
-
-    #     return recipe
+        get_logger().debug("Parsing blacklisted parameters")
+        self.parse_substances(black_list.substances, self.black_params)
 
     def parse_substances(
-        self,
-        substances: Optional[Substances],
-        storage: ParameterList,
-        overwrite: bool = False,
+        self, substances: Optional[Substances], storage: ParameterList
     ) -> None:
         """Parse a Substances object into a ParameterList."""
         if substances is not None:
             for item in substances:
-                storage.add_param(build_param_from_iter(item), overwrite=overwrite)
+                storage.add_param(build_param_from_iter(item))
 
     def __str__(self):
         """__str__ dunder method."""

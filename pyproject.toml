@@ -61,7 +61,7 @@ source = ["parasect", "tests"]
 
 [tool.coverage.report]
 show_missing = true
-fail_under = 96
+fail_under = 97
 
 [tool.mypy]
 strict = false
