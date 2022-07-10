@@ -3,6 +3,7 @@ common:
 formats:
   csv:
     common:
+    variants:
 
   px4:
     common:

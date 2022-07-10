@@ -187,7 +187,7 @@ class TestExport:
         assert lines[-1].startswith("Remember")
 
     def test_export_csv(self, setup_generic, build_meals):
-        """Test if exports to PX4 parameter format work."""
+        """Test if exports to CSV parameter format work."""
         meal = build_meals["light_meal"]
         gen = meal.export_to_csv()
         lines = list(gen)

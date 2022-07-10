@@ -8,3 +8,7 @@ hitl_meal:
 
 empty_subvariants:
   dish_1: var1/sar1
+
+empty_footer:
+  dish_1: ~
+  footer: empty_footer
