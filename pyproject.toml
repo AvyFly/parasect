@@ -9,7 +9,7 @@ homepage = "https://github.com/AvyFly/parasect"
 repository = "https://github.com/AvyFly/parasect"
 documentation = "https://parasect.readthedocs.io"
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
 ]
 
 [tool.poetry.urls]
