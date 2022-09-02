@@ -1,0 +1,12 @@
+common:
+
+formats:
+  csv:
+    common:
+    variants:
+
+  px4:
+    common:
+
+  px4afv1:
+    common:

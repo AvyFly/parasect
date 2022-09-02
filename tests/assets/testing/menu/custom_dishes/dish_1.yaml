@@ -1,0 +1,9 @@
+common:
+  ingredients:
+    - [ING1, 1, ~]
+
+variants:
+  var1:
+    common:
+      ingredients:
+        - [ING2, 2, ~]

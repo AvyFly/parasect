@@ -90,10 +90,10 @@ class Dish:
             if common_recipe is not None:
                 get_logger().debug(f"Parsing {model} common parameters")
                 self.parse_recipe(common_recipe)
-                # Load serial number parameters
-                if sn is not None:
-                    sn_recipe = self.get_sn_recipe(model, variant_model, sn)
-                    self.parse_recipe(sn_recipe)
+            # Load serial number parameters
+            if sn:
+                sn_recipe = self.get_sn_recipe(model, variant_model, sn)
+                self.parse_recipe(sn_recipe)
         else:
             pass
 
@@ -128,69 +128,42 @@ class Dish:
             else:
                 return Recipe()
         else:
-            return Recipe()
+            raise SyntaxError(
+                f"Tried to request subvariant {sn} but no subvariants are specified."
+            )
 
-    def parse_recipe(self, recipe: Recipe, overwrite: bool = False) -> None:
+    def parse_recipe(self, recipe: Recipe) -> None:
         """Parse a dictionary with parameters.
 
         Accepts a dict with contents:
         a "blacklist" dict (optional): a dictionary with keys "groups" and "parameters" with a parameter list
         inside of it, in case this is a blacklist class
         a "parameters" dict (optional): list of parameter items for normal parameter classes
-        "overwrite" allows overwriting existing parameters found in the lists
         """
         # Read blacklist if exists
         if recipe.allergens:
-            self.parse_allergens(recipe.allergens, overwrite)
+            self.parse_allergens(recipe.allergens)
 
         # Read edited parameters
         if recipe.ingredients:
-            self.parse_substances(recipe.ingredients, self.param_list, overwrite)
+            self.parse_substances(recipe.ingredients, self.param_list)
 
-    def parse_allergens(self, black_list: Allergens, overwrite: bool) -> None:
+    def parse_allergens(self, black_list: Allergens) -> None:
         """Parse the black list and group blacklist."""
         # Read all blacklisted groups
-        try:
-            get_logger().debug("Parsing blacklisted groups")
-            self.parse_substances(
-                black_list.groups, self.black_groups, overwrite=overwrite
-            )
-        except KeyError:
-            pass
+        get_logger().debug("Parsing blacklisted groups")
+        self.parse_substances(black_list.groups, self.black_groups)
         # Read all blacklisted params
-        try:
-            get_logger().debug("Parsing blacklisted parameters")
-            self.parse_substances(
-                black_list.substances, self.black_params, overwrite=overwrite
-            )
-        except KeyError:
-            pass
-
-    # def to_recipe(self) -> Recipe:
-    #     """Convert the ParameterClass to a dictionary."""
-    #     recipe = Recipe()
-    #     recipe.ingredients = [
-    #         (param.name, param.value, param.reasoning) for param in self.param_list
-    #     ]
-    #     recipe.allergens.groups = [
-    #         (param.name, param.value, param.reasoning) for param in self.black_groups
-    #     ]
-    #     recipe.allergens.substances = [
-    #         (param.name, param.value, param.reasoning) for param in self.black_params
-    #     ]
-
-    #     return recipe
+        get_logger().debug("Parsing blacklisted parameters")
+        self.parse_substances(black_list.substances, self.black_params)
 
     def parse_substances(
-        self,
-        substances: Optional[Substances],
-        storage: ParameterList,
-        overwrite: bool = False,
+        self, substances: Optional[Substances], storage: ParameterList
     ) -> None:
         """Parse a Substances object into a ParameterList."""
         if substances is not None:
             for item in substances:
-                storage.add_param(build_param_from_iter(item), overwrite=overwrite)
+                storage.add_param(build_param_from_iter(item))
 
     def __str__(self):
         """__str__ dunder method."""
@@ -254,12 +227,6 @@ class Meal:
         self.name = name
         get_logger().debug(f"Building new recipe {self.name}")
 
-        self.custom_dish_names = [
-            os.path.splitext(os.path.basename(filename))[0]
-            for filename in os.listdir(ConfigPaths().custom_dishes)
-            if os.path.splitext(filename)[1] == ".yaml"
-        ]
-
         # Pick your own recipe configuration
         meal_dict = meals_menu[name]
 
@@ -277,10 +244,7 @@ class Meal:
         )
 
         # Set the base parameters
-        if default_params_filepath or self.parent:
-            self.load_base_parameters(default_params_filepath)
-        else:
-            self.param_list = ParameterList()
+        self.load_base_parameters(default_params_filepath)
 
         # Decide if new parameters are allowed in this Meal
         if default_params_filepath or self.parent:
@@ -340,15 +304,10 @@ class Meal:
         """Check if a parent key is passed and load its presets."""
         if "parent" in meal_dict.keys():
             parent_name = meal_dict["parent"]
-            if isinstance(parent_name, str):
-                get_logger().debug(f"Reading modules of parent {parent_name}.")
-                self.parent = Meal(
-                    all_meals, default_params_filepath, configs_path, parent_name
-                )
-            else:
-                raise TypeError(
-                    f"Tried to parse invalid parent with value {parent_name}"
-                )
+            get_logger().debug(f"Reading modules of parent {parent_name}.")
+            self.parent = Meal(
+                all_meals, default_params_filepath, configs_path, parent_name  # type: ignore # Pydantic guarantees this is a string
+            )
 
     def parse_header_footer(self, meal_dict: MealType) -> None:
         """Store the desired header and footer files."""
@@ -359,35 +318,27 @@ class Meal:
 
         # Overwrite with newly specified ones
         if "header" in meal_dict.keys():
-            header = meal_dict["header"]
-            if not isinstance(header, (str, type(None))):
-                raise TypeError("header must be of type str or None.")
-            self.header = header
+            self.header = meal_dict["header"]  # type: ignore # Pydantic guarantees this is a string
         if "footer" in meal_dict.keys():
-            footer = meal_dict["footer"]
-            if not isinstance(footer, (str, type(None))):
-                raise TypeError("footer must be of type str or None.")
-            self.footer = footer
+            self.footer = meal_dict["footer"]  # type: ignore # Pydantic guarantees this is a string
 
     def load_base_parameters(self, default_params_filepath: Optional[Path]) -> None:
         """Load base parameter list."""
-        if self.parent is not None:
+        if self.parent:
             # If a parent is specified, load their parameters
             self.param_list = self.parent.param_list
+        elif default_params_filepath:
+            # Otherwise load defaults from file
+            self.param_list = read_params(default_params_filepath)
         else:
-            # Otherwise load defaults
-            if default_params_filepath:
-                self.param_list = read_params(default_params_filepath)
-            else:
-                raise ValueError("Default parameters path not set.")
+            self.param_list = (
+                ParameterList()
+            )  # No default parameters specified, adding at will.
 
     def decide_on_calibration(self, meal_dict: MealType) -> None:
         """Check if calibration data is to be preserved."""
         if "remove_calibration" in meal_dict.keys():
-            if isinstance(meal_dict["remove_calibration"], bool):
-                self.remove_calibration_flag = meal_dict["remove_calibration"]
-            else:
-                raise TypeError("remove_calibration flag is not a boolean")
+            self.remove_calibration_flag = meal_dict["remove_calibration"]  # type: ignore # Pydantic guarantees this is a bool
         elif self.parent is not None:
             # We assume that the parent has already removed calibration
             self.remove_calibration_flag = False
@@ -395,10 +346,7 @@ class Meal:
     def decide_on_operator(self, meal_dict: MealType) -> None:
         """Check if user data is to be preserved."""
         if "remove_operator" in meal_dict.keys():
-            if isinstance(meal_dict["remove_operator"], bool):
-                self.remove_operator_flag = meal_dict["remove_operator"]
-            else:
-                raise TypeError("remove_operator flag is not a boolean")
+            self.remove_operator_flag = meal_dict["remove_operator"]  # type: ignore # Pydantic guarantees this is a bool
         elif self.parent is not None:
             # We assume that the parent has already removed user data
             self.remove_operator_flag = False
@@ -472,23 +420,7 @@ class Meal:
                 self.param_list.add_param(parameter, safe=True)
         else:
             # New parameters are expected to be added, that don't exist in the original set.
-
-            if default_params_filepath:
-                default_param_list = read_params(default_params_filepath)
-
             for param in edited_param_list:
-                if default_params_filepath:
-                    # If there is a default parameter file, verify that those parameters exist in it.
-                    if param.name not in default_param_list.keys():
-                        # If not, raise an error
-                        raise KeyError(
-                            f"Parameter {param} does not exist in default parameter set."
-                        )
-                    else:
-                        # If yes, read their type and set it, because its type is not specified in the parent param list
-                        param.param_type = default_param_list[param.name].param_type
-
-                # Finally, add the new parameter in the parent set
                 get_logger().debug(
                     f"Adding parameter {param} from vehicle edit list to initial set"
                 )
@@ -499,27 +431,19 @@ class Meal:
         dishes_dict = dict()
         for dish_name in meal_dict.keys():
 
-            # Capture non-ParameterClass keys
-            if dish_name not in self.custom_dish_names:
-                # These are parsed separately
-                if (
-                    dish_name in ReservedOptionsSequence
-                    or dish_name in StapleDishesNamesSequence
-                ):
-                    continue
-                else:
-                    raise KeyError(
-                        f"Recipe {self.name} contains invalid class {dish_name}"
-                    )
+            # Do not parse staple dishes or options
+            if (
+                dish_name in ReservedOptionsSequence
+                or dish_name in StapleDishesNamesSequence
+            ):
+                continue
 
             # Parse the model/serial-number designation
             dish_designation = meal_dict[dish_name]
             model: Optional[str]
             sn: Optional[str]
             if dish_designation is not None:
-                if isinstance(dish_designation, int):
-                    raise TypeError("meal designation cannot be of type int.")
-                model_sn = dish_designation.split("/")
+                model_sn = dish_designation.split("/")  # type: ignore # Pydantic guarantees this is a string
                 model = model_sn[0]
                 if len(model_sn) > 1:
                     sn = model_sn[1]
@@ -535,37 +459,6 @@ class Meal:
             dishes_dict[dish_name] = Dish(dish, model, sn)
 
         return dishes_dict
-
-    # @staticmethod
-    # def update_modules_dict(
-    #     first_dict: Dict[str, Dish], second_dict: Dict[str, Dish]
-    # ) -> Dict[str, Dish]:
-    #     """Update first dict (containing modules) with the modules of second dict.
-
-    #     INPUT:
-    #         first_dict:     A dict containing ParameterClass() objects
-    #         second_dict:    Same as first_dict
-    #     OUTPUT:
-    #         new_dict:       A dict that has all the parameters of the first dict
-    #                         updated with the parameters of the second.
-    #     """
-    #     new_dict = dict(first_dict)
-    #     for class_name, class_value in second_dict.items():
-    #         if class_name not in first_dict.keys():
-    #             # ParameterClass from second dict doesn't exist in first
-    #             new_dict[class_name] = class_value
-    #         else:
-    #             # This ParameterClass exists, update fields
-    #             second_class_dict = second_dict[
-    #                 class_name
-    #             ].to_recipe()  # type: DishModel
-    #             new_param_class = first_dict[
-    #                 class_name
-    #             ]  # TODO this is NOT a copy constructor
-    #             new_param_class.parse_ingredients(second_class_dict, overwrite=True)
-    #             new_dict[class_name] = new_param_class
-
-    #     return new_dict
 
     def build_header_footer(
         self,
@@ -594,9 +487,8 @@ class Meal:
             variants = boilerplate_model.formats[text_type].variants
             if variants is not None:
                 meal_text = variants[variant_name].common
-                if meal_text is not None:
-                    for row in meal_text:
-                        yield row + "\n"
+                for row in meal_text:  # type: ignore # Pydantic guarantees this is a List[str]
+                    yield row + "\n"
 
     def __str__(self):
         """__str__ dunder method."""

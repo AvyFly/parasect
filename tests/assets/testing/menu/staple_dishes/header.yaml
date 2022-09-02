@@ -1,0 +1,15 @@
+common:
+  - "# Parameter file exported by Parasect."
+
+formats:
+  csv:
+    common:
+      - "# Parameter name, Parameter value"
+  px4:
+    common:
+      - "PX4-format header line 1\n"
+      - "PX4-format header line 2\n"
+  px4afv1:
+    common:
+      - "PX4-airframe-format header line 1\n"
+      - "PX4-airframe-format header line 2\n"

@@ -271,6 +271,12 @@ MealsType = Dict[str, MealType]
 DishModel.update_forward_refs()
 
 
+def check_type(key: str, value: Any, des_type: Any) -> None:
+    """Type if value with name key is of type."""
+    if not isinstance(value, des_type):
+        raise TypeError(f"Value of {key}={value} should be {des_type}.")
+
+
 class MealMenuModel(BaseModel):
     """The description of the whole meals catalogue."""
 
@@ -279,18 +285,25 @@ class MealMenuModel(BaseModel):
     @root_validator
     def _check_entries(cls, values):  # noqa: B902
         # Iterate over the meals
-        for meal in values["__root__"].keys():
+        for meal, content in values["__root__"].items():
             # Iterate over the dishes
-            for dish in values["__root__"][meal]:
-                if not (
-                    cls._is_custom_dish(dish)
-                    or cls._is_staple_dish(dish)
-                    or cls._is_reserved_option(dish)
-                ):
-                    raise AssertionError(
-                        f"Meal {meal} contains invalid field/dish {dish}."
-                    )
+            for dish_name in content.keys():
+                cls._check_content_names(dish_name, meal)
+            cls._check_content_values(content)
+
         return values
+
+    @classmethod
+    def _check_content_names(cls, entry_name: str, meal: str) -> None:
+        """Raise an error if the names of the Meal contents are invalid."""
+        if not (
+            cls._is_custom_dish(entry_name)
+            or cls._is_staple_dish(entry_name)
+            or cls._is_reserved_option(entry_name)
+        ):
+            raise AssertionError(
+                f"Meal {meal} contains invalid field/dish {entry_name}."
+            )
 
     @classmethod
     def _is_custom_dish(cls, dish_name: str) -> bool:
@@ -316,6 +329,28 @@ class MealMenuModel(BaseModel):
             return True
         else:
             return False
+
+    @classmethod
+    def _check_content_values(cls, contents: MealType) -> None:
+        """Raise an error if the contents of the Meal are invalid."""
+        # Iterate over the dishes and other entries
+        for key, value in contents.items():
+            if key in StapleDishesNamesSequence:
+                check_type(key, value, (str, type(None)))
+            elif key in ["parent"]:
+                check_type(key, value, str)
+            elif key in [
+                "sitl",
+                "hitl",
+                "remove_calibration",
+                "remove_operator",
+                "add_new",
+            ]:
+                check_type(key, value, bool)
+            elif key in ["frame_id"]:
+                check_type(key, value, int)
+            else:  # This is a custom dish
+                check_type(key, value, (str, type(None)))
 
     def __getitem__(self, item):
         """Access the model in a dict-like manner."""

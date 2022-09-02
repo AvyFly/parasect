@@ -9,6 +9,9 @@ from .utils import (  # noqa: F401 # setup_generic is used by pytest as string
 from .utils import (  # noqa: F401 # setup_px4 is used by pytest as string
     fixture_setup_px4,
 )
+from .utils import (  # noqa: F401 # setup_tests is used by pytest as string
+    fixture_setup_tests,
+)
 from .utils import setup_logger  # noqa: F401 # setup_logger is an autouse fixture
 from parasect import _helpers
 from parasect import build_lib
@@ -20,9 +23,90 @@ def build_meals():
     return build_lib.build_meals()
 
 
-@pytest.mark.usefixtures("setup_generic")
+@pytest.fixture
+def build_dish_model():
+    """Return a simple DishModel."""
+    return _helpers.DishModel.parse_obj(
+        {
+            "common": None,
+            "variants": {
+                "var1": {
+                    "variants": {"var2": {"common": {"ingredients": [["ING1", 1, ""]]}}}
+                }
+            },
+        }
+    )
+
+
 class TestDish:
     """Testing the Dish class."""
+
+    def test_empty_variant(self, build_dish_model):
+        """Test that a variant with no common section is properly handled.
+
+        Its sub-variants still exist in this test case.
+        """
+        model = build_dish_model
+        dish = build_lib.Dish(model, "var1", "var2")
+        assert "ING1" in dish
+
+    def test_bad_variant(self, build_dish_model):
+        """Verify that an exception is raised when asking for a non-existing variant."""
+        model = build_dish_model
+        with pytest.raises(
+            KeyError,
+            match="The variant var3 is not found in the parameter list of <class 'parasect.build_lib.Dish'>",
+        ):
+            build_lib.Dish(model, "var3")
+
+    def test_bad_subvariant(self, build_dish_model):
+        """Test that a non-existing subvariant raises a warning."""
+        model = build_dish_model
+        with pytest.raises(
+            KeyError, match="The submodel var1/var3 is not found in the parameter list"
+        ):
+            build_lib.Dish(model, "var1", "var3")
+
+    def test_empty_subvariant(self, build_dish_model):
+        """Test that a recipe with empty subvariant returns empty."""
+        model = _helpers.DishModel.parse_obj(
+            {
+                "common": None,
+                "variants": {"var1": {"variants": {"var2": {"common": None}}}},
+            }
+        )
+        dish = build_lib.Dish(model, "var1", "var2")
+        assert len(dish.param_list) == 0
+        assert len(dish.black_groups) == 0
+        assert len(dish.black_params) == 0
+
+
+@pytest.mark.usefixtures("setup_tests")
+class TestDishTests:
+    """Testing the Dish class with the Tests meal menu."""
+
+    def test_sitl(self):
+        """Test the sitl flag."""
+        meal = build_lib.build_meals(["sitl_meal"])["sitl_meal"]
+        assert meal.is_sitl
+
+    def test_hitl(self):
+        """Test the hitl flag."""
+        meal = build_lib.build_meals(["hitl_meal"])["hitl_meal"]
+        assert meal.is_hitl
+
+    def test_no_subvariant(self):
+        """Verify that requesting a subvariant with an empty subvariant list raises an error."""
+        with pytest.raises(
+            SyntaxError,
+            match="Tried to request subvariant sar1 but no subvariants are specified.",
+        ):
+            build_lib.build_meals(["empty_subvariants"])["empty_subvariants"]
+
+
+@pytest.mark.usefixtures("setup_generic")
+class TestDishGeneric:
+    """Testing the Dish class with the Generic meal menu."""
 
     def test_str_(self):
         """Test the __str__ dunder method."""
@@ -48,6 +132,16 @@ class TestDish:
         param = _helpers.Parameter("BEEF", 100)
         assert param in dish.param_list
         assert "UNOBTAINIUM" not in dish.param_list
+
+    def test_no_variant(self):
+        """Test that a Dish without a variant can be parsed."""
+        model = _helpers.DishModel.parse_obj(
+            {"common": {"ingredients": [["ING1", 1, ""]]}, "variants": None}
+        )
+        dish = build_lib.Dish(
+            model, "var1"
+        )  # Ask for a varient even if it doesn't exist
+        assert "ING1" in dish
 
 
 class TestMeal:
@@ -93,7 +187,7 @@ class TestExport:
         assert lines[-1].startswith("Remember")
 
     def test_export_csv(self, setup_generic, build_meals):
-        """Test if exports to PX4 parameter format work."""
+        """Test if exports to CSV parameter format work."""
         meal = build_meals["light_meal"]
         gen = meal.export_to_csv()
         lines = list(gen)
