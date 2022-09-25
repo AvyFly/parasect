@@ -50,7 +50,11 @@ Such Dishes are:
 * ``header.yaml``: The header text of the generated parameter files can be defined there.
 * ``footer.yaml``: The footer text of the generated parameter files can be defined there.
 
-*Menu Folder Structure:*
+
+Menu Folder Structure
+---------------------
+
+In the end, your meals menu folder will have the following structure:
 
 ::
 
