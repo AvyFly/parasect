@@ -5,7 +5,7 @@ Setting Paths
 
 #. To ignore *calibration* or *operator* parameters in :func:`compare <parasect.compare>`, it needs to know where the Meals Menu is, to find the corresponding staple Dishes.
 #. To :func:`build <parasect.build>` the Meals Menu, it needs to know its folder path.
-#. To :func:`build <parasect.build>` a Meals Menu with the PX4 format, it needs to know the filepath of the default parameters .xml file.
+#. To :func:`build <parasect.build>` a Meals Menu with the PX4 format, it also needs to know the filepath of the default parameters .xml file.
 
 In sum, there are two resources that the user might need to specify:
 
