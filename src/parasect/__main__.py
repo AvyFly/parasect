@@ -37,7 +37,7 @@ def cli(debug: bool) -> None:
 )
 @click.option(
     "-s",
-    "--supress-calibration",
+    "--suppress-calibration",
     "nocal",
     is_flag=True,
     default=False,
@@ -45,7 +45,7 @@ def cli(debug: bool) -> None:
 )
 @click.option(
     "-u",
-    "--supress-operator-defined",
+    "--suppress-operator-defined",
     "noop",
     is_flag=True,
     default=False,
