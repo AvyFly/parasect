@@ -11,3 +11,11 @@ my_vtol_2:
   tuning: my_vtol_2
   header: ~
   footer: ~
+
+my_vtol_3:
+  frame_id: 3
+  parent: my_vtol_2
+  sih: my_vtol_3
+  header: ~
+  footer: ~
+  add_new: True

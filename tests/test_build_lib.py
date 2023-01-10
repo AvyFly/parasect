@@ -168,6 +168,11 @@ class TestMeal:
         )
         assert vtol_1.param_list["BAT1_V_EMPTY"].value == 3.3
 
+    def test_add_new(self, setup_px4, build_meals):
+        """Make sure new parameters lookup the defaults for their type."""
+        vtol_3 = build_meals["my_vtol_3"]
+        assert vtol_3.param_list["SIH_IXX"].param_type == "FLOAT"
+
 
 class TestExport:
     """Testing the export functionalities."""

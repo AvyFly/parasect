@@ -214,6 +214,7 @@ class Meal:
     remove_calibration_flag = False
     remove_operator_flag = False
     param_list: ParameterList
+    default_param_list: ParameterList
     custom_dishes_names = None
 
     def __init__(
@@ -236,6 +237,9 @@ class Meal:
         else:
             self.frame_id = 0
 
+        # Parse the default parameters
+        self.parse_default_parameters(default_params_filepath)
+
         self.parse_parent(
             meal_dict,
             meals_menu,
@@ -244,7 +248,7 @@ class Meal:
         )
 
         # Set the base parameters
-        self.load_base_parameters(default_params_filepath)
+        self.load_base_parameters()
 
         # Decide if new parameters are allowed in this Meal
         if default_params_filepath or self.parent:
@@ -322,18 +326,21 @@ class Meal:
         if "footer" in meal_dict.keys():
             self.footer = meal_dict["footer"]  # type: ignore # Pydantic guarantees this is a string
 
-    def load_base_parameters(self, default_params_filepath: Optional[Path]) -> None:
+    def parse_default_parameters(self, default_params_filepath: Optional[Path]) -> None:
+        """Generate the default parameters list."""
+        if default_params_filepath:
+            self.default_param_list = read_params(default_params_filepath)
+        else:
+            self.default_param_list = ParameterList()
+
+    def load_base_parameters(self) -> None:
         """Load base parameter list."""
         if self.parent:
             # If a parent is specified, load their parameters
             self.param_list = self.parent.param_list
-        elif default_params_filepath:
-            # Otherwise load defaults from file
-            self.param_list = read_params(default_params_filepath)
         else:
-            self.param_list = (
-                ParameterList()
-            )  # No default parameters specified, adding at will.
+            # Otherwise use defaults
+            self.param_list = self.default_param_list
 
     def decide_on_calibration(self, meal_dict: MealType) -> None:
         """Check if calibration data is to be preserved."""
@@ -421,6 +428,10 @@ class Meal:
         else:
             # New parameters are expected to be added, that don't exist in the original set.
             for param in edited_param_list:
+                # Try to guess the new parameter type based on the default parameter set
+                if param.param_type is None and param in self.default_param_list:
+                    param.param_type = self.default_param_list[param.name].param_type
+
                 get_logger().debug(
                     f"Adding parameter {param} from vehicle edit list to initial set"
                 )
@@ -430,7 +441,6 @@ class Meal:
         """Collect all dishes from the configuration dict."""
         dishes_dict = dict()
         for dish_name in meal_dict.keys():
-
             # Do not parse staple dishes or options
             if (
                 dish_name in ReservedOptionsSequence

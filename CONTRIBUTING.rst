@@ -51,13 +51,12 @@ Then, you need Python 3.8+ and the following tools:
 - Nox_
 - nox-poetry_
 
-Install Poetry_ by downloading and running install-poetry.py_:
-
-.. _install-poetry.py: https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py
+Install Poetry_ by downloading and running the following script:
 
 .. code:: console
 
-   $ python install-poetry.py
+   $ curl -sSL https://install.python-poetry.org | python3 -
+
 
 Install Nox_ and nox-poetry_:
 
