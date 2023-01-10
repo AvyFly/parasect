@@ -7,6 +7,8 @@ common:
     groups:
       - [Attitude Q estimator, ~, Only used for multicopter format]
       - [Rover Position Control, ~, Not applicable to VTOL]
+      - [Simulation In Hardware, ~, Not applicable to our configuration]
+
     substances:
       - [TC_A0_ID, ~, Not applicable to my configuration]
 
