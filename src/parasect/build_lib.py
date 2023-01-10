@@ -441,7 +441,6 @@ class Meal:
         """Collect all dishes from the configuration dict."""
         dishes_dict = dict()
         for dish_name in meal_dict.keys():
-
             # Do not parse staple dishes or options
             if (
                 dish_name in ReservedOptionsSequence

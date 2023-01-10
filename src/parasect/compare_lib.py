@@ -109,7 +109,6 @@ def compare_parameter_lists(
 
     # Parse contents
     for param_name in all_param_names:
-
         param_diff = False
 
         param_1: Optional[Parameter]
