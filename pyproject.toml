@@ -27,7 +27,7 @@ directory-tree = "^0.0.2"
 pytest = "^7.1.2"
 coverage = {extras = ["toml"], version = "^6.4"}
 safety = "^2.2.0"
-mypy = "^0.961"
+mypy = "^1.0"
 typeguard = "^2.13.2"
 xdoctest = {extras = ["colors"], version = "^1.0.0"}
 sphinx = "^5.0.1"
