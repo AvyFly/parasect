@@ -201,13 +201,16 @@ class TestParameterList:
         light_meal = generic_meals["light_meal"]
         new_parameter_list = _helpers.ParameterList(light_meal.param_list)
         assert light_meal.param_list.keys() == new_parameter_list.keys()
+        assert not (light_meal.param_list.params is new_parameter_list.params)
 
     def test_subtract(self, generic_meals):
         """Test the __sub__ operation."""
         spicy_meal = generic_meals["spicy_meal"]
         light_meal = generic_meals["light_meal"]
         params_diff = spicy_meal.param_list - light_meal.param_list
-        assert list(params_diff.keys()) == ["CHILLI", "JALLAPENOS"]
+        assert len(params_diff) == 2
+        assert "CHILLI" in params_diff
+        assert "JALLAPENOS" in params_diff
 
     def test_str(self, generic_meals):
         """Test the __str__ operation."""
@@ -327,6 +330,22 @@ class TestPX4ParamReaders:
         with pytest.raises(SyntaxError) as exc_info:
             _helpers.read_params_qgc(new_file)
         assert str(exc_info.value) == "Could not extract any parameter from file."
+
+    def test_qgc_cid_shadowing(self, tmp_path):
+        """Verify that the same parameter in a different component doesn't shadow the former."""
+        new_entry = ["1	2	ASPD_SCALE_1	2.0	9"]
+        path = tmp_path
+        new_file = path / "edited.params"
+        old_fp = open(utils.PX4_GAZEBO_PARAMS)
+        old_lines = old_fp.readlines()
+        new_fp = open(new_file, "a")
+        new_fp.writelines(old_lines[0:-1])  # Stop right before the </parameters> tag
+        new_fp.writelines(new_entry)
+        new_fp.close()
+
+        parameter_list = _helpers.read_params(new_file)
+        # Test if the parameter exists, is in the correct group and has the correct type and value
+        assert parameter_list["ASPD_SCALE_1"].value == pytest.approx(1)
 
     def test_ulog_param(self):
         """Test reading from a parameter file extracted from a .ulg via ulog_params."""
