@@ -462,7 +462,7 @@ class Parameter:
     reboot_required = False
     group = None
     vid: int  # Vehicle ID, default 1
-    cid: int  # Componenet ID, default 1
+    cid: int  # Component ID, default 1
 
     def __init__(
         self,
