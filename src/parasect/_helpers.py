@@ -548,7 +548,28 @@ class ParameterList:
         if not original:
             self.params = dict()
         else:
-            self.params = original.params
+            self.params = dict(original.params)
+
+    @classmethod
+    def build_param_hash_from_param(cls, p: Parameter) -> str:
+        """Build the params dictionary hash from a Parameter entry."""
+        return cls.build_param_hash(p.name, p.cid)
+
+    @staticmethod
+    def build_param_hash(name: str, cid: int) -> str:
+        """Build the params dictionary."""
+        return f"{name}:{cid}"
+
+    @staticmethod
+    def decode_parameter_hash(hash: str) -> Tuple[str, int]:
+        """Deduce parameter details from the hash."""
+        parts = hash.split(":")
+        name = parts[0]
+        if len(parts) == 1:
+            cid = 1
+        else:
+            cid = int(parts[1])
+        return name, cid
 
     def __iter__(self) -> Generator[Parameter, None, None]:
         """__iter__ dunder method."""
@@ -559,7 +580,8 @@ class ParameterList:
         """Subtract a ParameterList from another ParameterList."""
         param_list = ParameterList(self)
         for param in param_list:
-            if param.name in other.keys():
+            param_hash = self.build_param_hash_from_param(param)
+            if param_hash in other.keys():
                 param_list.remove_param(param)
         return param_list
 
@@ -574,16 +596,26 @@ class ParameterList:
         """__len__ dunder method."""
         return len(self.params)
 
-    def __getitem__(self, key: str) -> Parameter:
+    def __getitem__(self, key: Union[str, Tuple[str, int]]) -> Parameter:
         """__getitem__ dunder method."""
-        return self.params[key]
+        if isinstance(key, str):
+            # The key is only a parameter name. Assume cid == 1.
+            name, cid = self.decode_parameter_hash(key)
+        else:
+            # The cid is provided.
+            name, cid = key
+        param_hash = self.build_param_hash(name, cid)
+        return self.params[param_hash]
 
     def __contains__(self, item: Union[str, Parameter]) -> bool:
         """Answer if the parameter list contains a parameter."""
         if isinstance(item, str):
-            return item in self.params.keys()
+            # Assume cid == 1.
+            param_hash = self.build_param_hash(item, 1)
+            return param_hash in self.params.keys()
         else:  # item is Parameter
-            return item.name in self.params.keys()
+            param_hash = self.build_param_hash_from_param(item)
+            return param_hash in self.params.keys()
 
     def keys(self) -> KeysView:
         """__keys__ dunder method.
@@ -600,35 +632,37 @@ class ParameterList:
         # safe: allow adding new parameters
         # overwrite: allow overwriting existing parameters
         get_logger().debug(f"Attempting to add {param} to list")
-        if safe and param.name not in self.params.keys():
-            raise KeyError(f"{param.name} is not an existing key")
-        if not overwrite and param.name in self.params.keys():
-            raise KeyError(f"Tried to overwrite key {param.name}")
+        param_hash = self.build_param_hash_from_param(param)
+        if safe and param_hash not in self.params.keys():
+            raise KeyError(f"{param.name} with cid={param.cid} is not an existing key")
+        if not overwrite and param_hash in self.params.keys():
+            raise KeyError(f"Tried to overwrite key {param.name} with cid={param.cid}")
         # If parameter doesn't exist, create it
-        if param.name not in self.params:
-            self.params[param.name] = param
+        if param_hash not in self.params:
+            self.params[param_hash] = param
         # otherwise copy only the value
         else:
             # Try to deduce parameter type
             if param.param_type is not None:
                 # If we know the new parameter type
                 new_value = param.value
-            elif self.params[param.name].param_type is None:
+            elif self.params[param_hash].param_type is None:
                 # If we don't know the existing parameter type
                 new_value = param.value
             else:
                 # We know the target type, cast the new parameter value
-                param_type = self.params[param.name].param_type
+                param_type = self.params[param_hash].param_type
                 new_value = cast_param_value(param.value, param_type)
-            self.params[param.name].value = new_value
+            self.params[param_hash].value = new_value
 
     def remove_param(self, param: Parameter, safe: bool = True) -> None:
         """Remove a Parameter from the list."""
         # param: The parameter object
         # safe: don't try to remove not existing parameters
-        if safe and param.name not in self.params.keys():
-            raise KeyError(f"{param.name} is not an existing key")
-        self.params.pop(param.name, None)
+        param_hash = self.build_param_hash_from_param(param)
+        if safe and param_hash not in self.params.keys():
+            raise KeyError(f"{param.name} with cid={param.cid} is not an existing key")
+        self.params.pop(param_hash, None)
 
 
 # Construct parameters from structured input

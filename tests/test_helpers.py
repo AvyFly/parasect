@@ -201,13 +201,16 @@ class TestParameterList:
         light_meal = generic_meals["light_meal"]
         new_parameter_list = _helpers.ParameterList(light_meal.param_list)
         assert light_meal.param_list.keys() == new_parameter_list.keys()
+        assert not (light_meal.param_list.params is new_parameter_list.params)
 
     def test_subtract(self, generic_meals):
         """Test the __sub__ operation."""
         spicy_meal = generic_meals["spicy_meal"]
         light_meal = generic_meals["light_meal"]
         params_diff = spicy_meal.param_list - light_meal.param_list
-        assert list(params_diff.keys()) == ["CHILLI", "JALLAPENOS"]
+        assert len(params_diff) == 2
+        assert "CHILLI" in params_diff
+        assert "JALLAPENOS" in params_diff
 
     def test_str(self, generic_meals):
         """Test the __str__ operation."""

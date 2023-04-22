@@ -24,38 +24,38 @@ class TestGenericMeals:
     def test_snack(self, generic_meals):
         """Test if the snack has correctly generated."""
         snack = generic_meals["snack"]
-        assert "APPLE" in snack.param_list.keys()
+        assert "APPLE" in snack.param_list
 
     def test_breakfast(self, generic_meals):
         """Test if the breakfast has correctly generated."""
         breakfast = generic_meals["breakfast"]
-        assert "MILK" in breakfast.param_list.keys()
+        assert "MILK" in breakfast.param_list
 
     def test_light_meal(self, generic_meals):
         """Test if the light_meal has correctly generated."""
         light_meal = generic_meals["light_meal"]
-        assert "BEEF" in light_meal.param_list.keys()
-        assert "CUCUMBER" in light_meal.param_list.keys()
-        assert "MUSHROOMS" not in light_meal.param_list.keys()
-        assert "VINEGAR" not in light_meal.param_list.keys()
-        assert "EGG" not in light_meal.param_list.keys()
-        assert "SALT" not in light_meal.param_list.keys()
-        assert "GRAVY" not in light_meal.param_list.keys()
+        assert "BEEF" in light_meal.param_list
+        assert "CUCUMBER" in light_meal.param_list
+        assert "MUSHROOMS" not in light_meal.param_list
+        assert "VINEGAR" not in light_meal.param_list
+        assert "EGG" not in light_meal.param_list
+        assert "SALT" not in light_meal.param_list
+        assert "GRAVY" not in light_meal.param_list
 
     def test_spicy_meal(self, generic_meals):
         """Test if the spicy_meal has correctly generated."""
         spicy_meal = generic_meals["spicy_meal"]
-        assert "BEEF" in spicy_meal.param_list.keys()
-        assert "CHILLI" in spicy_meal.param_list.keys()
-        assert "EGG" not in spicy_meal.param_list.keys()
+        assert "BEEF" in spicy_meal.param_list
+        assert "CHILLI" in spicy_meal.param_list
+        assert "EGG" not in spicy_meal.param_list
 
     def test_full_meal(self, generic_meals):
         """Test if the full_meal has correctly generated."""
         full_meal = generic_meals["full_meal"]
-        assert "BEEF" in full_meal.param_list.keys()
-        assert "CHILLI" not in full_meal.param_list.keys()
-        assert "EGG" in full_meal.param_list.keys()
-        assert "PISTACHIO" not in full_meal.param_list.keys()
+        assert "BEEF" in full_meal.param_list
+        assert "CHILLI" not in full_meal.param_list
+        assert "EGG" in full_meal.param_list
+        assert "PISTACHIO" not in full_meal.param_list
 
     def test_christmass_meal(self, generic_meals):
         """Test if the christmass_meal has correctly generated."""
@@ -65,5 +65,5 @@ class TestGenericMeals:
     def test_dangerous_combinations(self, generic_meals):
         """Test if the dangerous_combinations has correctly generated."""
         dangerous_combinations = generic_meals["dangerous_combinations"]
-        assert "MILK" in dangerous_combinations.param_list.keys()
-        assert "COFFEE" in dangerous_combinations.param_list.keys()
+        assert "MILK" in dangerous_combinations.param_list
+        assert "COFFEE" in dangerous_combinations.param_list

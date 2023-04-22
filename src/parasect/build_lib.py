@@ -515,10 +515,11 @@ class Meal:
         header_model = get_boilerplate(ConfigPaths().staple_dishes, "header")
         yield from self.build_header_footer(header_model, self.header, "px4")
 
-        param_names = sorted(self.param_list.keys())
-        for param_name in param_names:
-            param_value = self.param_list[param_name].get_pretty_value()
-            internal_type = self.param_list[param_name].param_type
+        param_hashes = sorted(self.param_list.keys())
+        for param_hash in param_hashes:
+            param_name = self.param_list[param_hash].name
+            param_value = self.param_list[param_hash].get_pretty_value()
+            internal_type = self.param_list[param_hash].param_type
             if internal_type == "FLOAT":
                 param_type = 9
             elif internal_type == "INT32":
@@ -528,8 +529,8 @@ class Meal:
                     f"Unknown parameter type {internal_type} for parameter {param_name}"
                 )
 
-            vid = self.param_list[param_name].vid
-            cid = self.param_list[param_name].cid
+            vid = self.param_list[param_hash].vid
+            cid = self.param_list[param_hash].cid
             yield f"{vid}\t{cid}\t{param_name}\t{param_value}\t{param_type}\n"
 
     def export_to_px4af(self, version: int) -> Generator[str, None, None]:
@@ -554,9 +555,10 @@ class Meal:
         else:
             indentation = ""
 
-        param_names = sorted(self.param_list.keys())
-        for param_name in param_names:
-            param_value = self.param_list[param_name].get_pretty_value()
+        param_hashes = sorted(self.param_list.keys())
+        for param_hash in param_hashes:
+            param_name = self.param_list[param_hash].name
+            param_value = self.param_list[param_hash].get_pretty_value()
 
             yield f"{indentation}param {directive} {param_name} {param_value}\n"
 
@@ -588,8 +590,9 @@ class Meal:
 
         indentation = ""
 
-        param_names = sorted(self.param_list.keys())
-        for param_name in param_names:
+        param_hashes = sorted(self.param_list.keys())
+        for param_name in param_hashes:
+            param_name = self.param_list[param_name].name
             param_value = self.param_list[param_name].get_pretty_value()
 
             yield f"{indentation}{param_name},{param_value}\n"
