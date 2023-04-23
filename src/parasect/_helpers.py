@@ -234,8 +234,8 @@ class Allergens(BaseModel, extra="forbid"):
 class Recipe(BaseModel, extra="forbid"):
     """A set of ingredients and allergens."""
 
-    ingredients: Optional[Substances]
-    allergens: Optional[Allergens]
+    ingredients: Optional[Substances] = None
+    allergens: Optional[Allergens] = None
 
 
 class DishModel(BaseModel, extra="forbid"):
