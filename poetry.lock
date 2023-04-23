@@ -365,14 +365,14 @@ files = [
 
 [[package]]
 name = "directory-tree"
-version = "0.0.2"
-description = "Utility Package that displays out the Tree Structure of a Particular Directory."
-category = "main"
+version = "0.0.3.1"
+description = "Utility Package that Displays out the Tree Structure of a Particular Directory."
+category = "dev"
 optional = false
 python-versions = "*"
 files = [
-    {file = "directory_tree-0.0.2-py3-none-any.whl", hash = "sha256:2d67cf4fd9394b2a8dd30d2be074afc51ac61c5bd121b3bf91803e08b4fb6a3d"},
-    {file = "directory_tree-0.0.2.tar.gz", hash = "sha256:9da96fbdeb0e375c47012901b9e4c1fac4e960c5a9123626fd25074d4d03626d"},
+    {file = "directory_tree-0.0.3.1-py3-none-any.whl", hash = "sha256:72411e4f1534afaaccadb21fc082c727a680b6a74e8d21a1406ffbe51389cd85"},
+    {file = "directory_tree-0.0.3.1.tar.gz", hash = "sha256:e4f40d60a45c4cdc0bc8e9ee29311f554dee6c969241c0eef8bcd92b4d4bcd4a"},
 ]
 
 [package.extras]
@@ -1829,4 +1829,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "e37c0208ef4dc3f266bb603521a2b79d953d64be9256b5119e139ae90534fe11"
+content-hash = "2102eb6e3199c6a5f442682f24586e054ec8d757b2cea378c5dfca246e1a193e"
