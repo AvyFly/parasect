@@ -460,7 +460,7 @@ class Parameter:
     unit = None
     decimal = None  # Suggested increment by the parameter documentation
     reboot_required = False
-    group = None
+    group: Optional[str] = None
     vid: int  # Vehicle ID, default 1
     cid: int  # Component ID, default 1
 
@@ -580,8 +580,7 @@ class ParameterList:
         """Subtract a ParameterList from another ParameterList."""
         param_list = ParameterList(self)
         for param in param_list:
-            param_hash = self.build_param_hash_from_param(param)
-            if param_hash in other.keys():
+            if param in other:
                 param_list.remove_param(param)
         return param_list
 
@@ -639,9 +638,11 @@ class ParameterList:
             raise KeyError(f"Tried to overwrite key {param.name} with cid={param.cid}")
         # If parameter doesn't exist, create it
         if param_hash not in self.params:
+            get_logger().debug(f"Creating new {param.name}")
             self.params[param_hash] = param
         # otherwise copy only the value
         else:
+            get_logger().debug(f"Overwriting {param.name}")
             # Try to deduce parameter type
             if param.param_type is not None:
                 # If we know the new parameter type
@@ -660,8 +661,9 @@ class ParameterList:
         # param: The parameter object
         # safe: don't try to remove not existing parameters
         param_hash = self.build_param_hash_from_param(param)
-        if safe and param_hash not in self.params.keys():
+        if safe and param_hash not in self.params:
             raise KeyError(f"{param.name} with cid={param.cid} is not an existing key")
+        get_logger().debug(f"Removing {param.name}.")
         self.params.pop(param_hash, None)
 
 
