@@ -385,12 +385,14 @@ class Meal:
     ) -> None:
         """Remove the blacklisted parameters from the recipe."""
         for param in self.param_list:
-            if (
-                param.group in black_group_list.keys()
-                or param.name in black_param_list.keys()
-            ):
+            if param.group and param.group in black_group_list:
                 get_logger().debug(
-                    f"Removing parameter {param} because it is blacklisted"
+                    f"Removing parameter {param} because its group is blacklisted."
+                )
+                self.param_list.remove_param(param)
+            if param in black_param_list:
+                get_logger().debug(
+                    f"Removing parameter {param} because it is blacklisted."
                 )
                 self.param_list.remove_param(param)
 

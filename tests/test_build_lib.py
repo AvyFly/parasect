@@ -155,6 +155,12 @@ class TestMeal:
         assert param in light_meal.param_list
         assert "UNOBTAINIUM" not in light_meal.param_list
 
+    def test_allergens(self, setup_px4, build_meals):
+        """Make sure allergens defined in custom dishes are removed."""
+        vtol_1 = build_meals["my_vtol_1"]
+        assert "TC_A0_ID" not in vtol_1.param_list
+        assert "ATT_ACC_COMP" not in vtol_1.param_list
+
     def test_floats(self, setup_generic, build_meals):
         """Make sure floats are correctly parsed from the recipe."""
         light_meal = build_meals["light_meal"]
