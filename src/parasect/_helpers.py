@@ -460,7 +460,7 @@ class Parameter:
     unit = None
     decimal = None  # Suggested increment by the parameter documentation
     reboot_required = False
-    group = None
+    group: Optional[str] = None
     vid: int  # Vehicle ID, default 1
     cid: int  # Component ID, default 1
 
