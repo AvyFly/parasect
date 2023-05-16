@@ -813,6 +813,8 @@ def read_params_ulog_param(filepath: Path) -> ParameterList:
         param_reader = csv.reader(csvfile, delimiter=",")
         for param_row in param_reader:  # pragma: no branch
             # Check if line has exactly two elements
+            if param_row[0][0] == "#":  # Skip comment lines
+                continue
             if len(param_row) != 2:
                 raise SyntaxError(
                     f"Invalid number of elements for ulog param decoder: {len(param_row)}"
