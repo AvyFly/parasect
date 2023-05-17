@@ -194,6 +194,8 @@ class Formats(Enum):
     """Legacy PX4 airframe file, prior to version 1.11."""
     px4afv2 = "px4afv2"
     """New PX4 airframe file, version 1.11 and later."""
+    apm = "apm"
+    """Ardupilot-compatible file."""
 
 
 ReservedOptions = Literal[

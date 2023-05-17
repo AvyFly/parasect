@@ -604,6 +604,33 @@ class Meal:
         footer_dict = get_boilerplate(ConfigPaths().staple_dishes, "footer")
         yield from self.build_header_footer(footer_dict, self.footer, "csv")
 
+    def export_to_apm(self) -> Generator[str, None, None]:
+        """Export as apm parameter file."""
+        # Read header
+        get_logger().debug("Loading parameter header.")
+        header_dish = get_boilerplate(ConfigPaths().staple_dishes, "header")
+        yield from self.build_header_footer(header_dish, self.header, "apm")
+
+        indentation = ""
+
+        param_hashes = sorted(self.param_list.keys())
+        for param_name in param_hashes:
+            param_name = self.param_list[param_name].name
+            param_value = self.param_list[param_name].get_pretty_value()
+            reasoning = self.param_list[param_name].reasoning
+            is_readonly = reasoning.find("@READONLY") > 1
+            if is_readonly:
+                readonly_string = "\t@READONLY"
+            else:
+                readonly_string = ""
+
+            yield f"{indentation}{param_name}\t{param_value}{readonly_string}\n"
+
+        # Read footer
+        get_logger().debug("Loading parameter footer.")
+        footer_dict = get_boilerplate(ConfigPaths().staple_dishes, "footer")
+        yield from self.build_header_footer(footer_dict, self.footer, "apm")
+
     def export(self, format: Formats) -> Iterable[str]:
         """Export general method."""
         if format == Formats.csv:
@@ -614,6 +641,8 @@ class Meal:
             return self.export_to_px4afv1()
         elif format == Formats.px4afv2:
             return self.export_to_px4afv2()
+        elif format == Formats.apm:
+            return self.export_to_apm()
         else:
             raise ValueError(f"Output format {format} not supported.")
 
