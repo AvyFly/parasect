@@ -726,6 +726,26 @@ def build_param_from_ulog_params(row: List[str]) -> Parameter:
     return param
 
 
+def build_param_from_mavproxy(item: Sequence) -> Parameter:
+    """Convert a mavproxy parameter line to a parameter.
+
+    item should be a 3-length sequence of strings.
+    """
+    name = item[0]
+    value: Union[int, float]
+    value = item[1]
+    try:
+        value = int(item[1])
+    except ValueError:
+        value = float(item[1])
+    reasoning = item[2]
+
+    param = Parameter(name, value)
+    param.reasoning = reasoning
+
+    return param
+
+
 def build_param_from_iter(item: Sequence) -> Parameter:
     """Convert a param list item to a parameter.
 
@@ -747,6 +767,14 @@ def build_param_from_iter(item: Sequence) -> Parameter:
 # Read parameter text files
 ###########################
 
+parsers = []
+
+
+def parser(parser_func):
+    """Decorator to mark and collect parser functions."""
+    parsers.append(parser_func)
+    return parser_func
+
 
 def get_group_params_xml(group: XmlElement) -> Generator[XmlElement, None, None]:
     """Read parameter elements from an PX4-style XML group element.
@@ -757,81 +785,133 @@ def get_group_params_xml(group: XmlElement) -> Generator[XmlElement, None, None]
     yield from group.findall("parameter")
 
 
+@parser
 def read_params_xml(filepath: Path) -> ParameterList:
     """Read and parse an PX4-style XML parameter list."""
-    tree = eTree.parse(filepath)
-    root = tree.getroot()
+    try:
+        tree = eTree.parse(filepath)
+        root = tree.getroot()
 
-    param_list = ParameterList()
+        param_list = ParameterList()
 
-    # Parse all parameter groups
-    for group in root.findall("group"):
-        group_name = group.get("name")
-        for param_xml in get_group_params_xml(group):
+        # Parse all parameter groups
+        for group in root.findall("group"):
+            group_name = group.get("name")
+            for param_xml in get_group_params_xml(group):
+                param = build_param_from_xml(param_xml)
+                param.group = group_name.upper()
+                get_logger().debug(f"Created new parameter from XML: {param}")
+                param_list.add_param(param)
+
+        # Parse all loose parameters
+        for param_xml in root.findall("parameter"):
             param = build_param_from_xml(param_xml)
-            param.group = group_name.upper()
-            get_logger().debug(f"Created new parameter from XML: {param}")
             param_list.add_param(param)
 
-    # Parse all loose parameters
-    for param_xml in root.findall("parameter"):
-        param = build_param_from_xml(param_xml)
-        param_list.add_param(param)
-
-    return param_list
+        return param_list
+    except eTree.ParseError as e:
+        raise SyntaxError("File is not of XML format.") from e
 
 
+@parser
 def read_params_qgc(filepath: Path) -> ParameterList:
     """Read and parse a QGC/AMC/Auterion Suite parameters file."""
     param_list = ParameterList()
 
-    with open(filepath) as csvfile:
-        param_reader = csv.reader(csvfile, delimiter="\t")
-        for param_row in param_reader:  # pragma: no branch
-            get_logger().debug(f"Examining line: {param_row}")
-            if len(param_row) == 0:  # Skip empty lines
-                continue
-            if param_row[0][0] == "#":  # Skip comment lines
-                continue
-            # Test for wrong number of elements
-            if len(param_row) != 5:
-                raise SyntaxError("Wrong number of line elements")
-            param = build_param_from_qgc(param_row)
-            param_list.add_param(param)
+    try:
+        with open(filepath) as csvfile:
+            param_reader = csv.reader(csvfile, delimiter="\t")
+            for param_row in param_reader:  # pragma: no branch
+                get_logger().debug(f"Examining line: {param_row}")
+                if len(param_row) == 0:  # Skip empty lines
+                    continue
+                if param_row[0][0] == "#":  # Skip comment lines
+                    continue
+                # Test for wrong number of elements
+                if len(param_row) != 5:
+                    raise SyntaxError("Wrong number of line elements")
+                param = build_param_from_qgc(param_row)
+                param_list.add_param(param)
 
-    if len(param_list.params) == 0:
-        raise (SyntaxError("Could not extract any parameter from file."))
+        if len(param_list.params) == 0:
+            raise (SyntaxError("Could not extract any parameter from file."))
 
-    return param_list
+        return param_list
+    except SyntaxError as e:
+        raise SyntaxError(f"File is not of QGC format:\n{e}") from e
 
 
+@parser
 def read_params_ulog_param(filepath: Path) -> ParameterList:
     """Read and parse the outputs of the ulog_params program."""
     param_list = ParameterList()
 
-    with open(filepath) as csvfile:
-        param_reader = csv.reader(csvfile, delimiter=",")
-        for param_row in param_reader:  # pragma: no branch
-            # Check if line has exactly two elements
-            if param_row[0][0] == "#":  # Skip comment lines
-                continue
-            if len(param_row) != 2:
-                raise SyntaxError(
-                    f"Invalid number of elements for ulog param decoder: {len(param_row)}"
-                )
-            # Check if first element is a string
-            try:
-                float(param_row[0])
-                raise SyntaxError("First row element must be a parameter name string")
-            except ValueError:
-                pass
-            param = build_param_from_ulog_params(param_row)
-            param_list.add_param(param)
+    try:
+        with open(filepath) as csvfile:
+            param_reader = csv.reader(csvfile, delimiter=",")
+            for param_row in param_reader:  # pragma: no branch
+                if param_row[0][0] == "#":  # Skip comment lines
+                    continue
+                # Check if line has exactly two elements
+                if len(param_row) != 2:
+                    raise SyntaxError(
+                        f"Invalid number of elements for ulog param decoder: {len(param_row)}"
+                    )
+                # Check if first element is a string
+                try:
+                    float(param_row[0])
+                    raise SyntaxError(
+                        "First row element must be a parameter name string"
+                    )
+                except ValueError:
+                    pass
+                param = build_param_from_ulog_params(param_row)
+                param_list.add_param(param)
 
-    if len(param_list.params) == 0:
-        raise (SyntaxError("Could not extract any parameter from file."))
+        if len(param_list.params) == 0:
+            raise (SyntaxError("Could not extract any parameter from file."))
 
-    return param_list
+        return param_list
+    except SyntaxError as e:
+        raise SyntaxError(f"File is not of ulog format:\n{e}") from e
+
+
+@parser
+def read_params_mavproxy(filepath: Path) -> ParameterList:
+    """Read and parse the outputs of mavproxy."""
+    param_list = ParameterList()
+
+    try:
+        with open(filepath) as f:
+            for line in f:  # pragma: no branch
+                if line[0] == "#":  # Skip comment lines
+                    continue
+                params = line.split()
+                # Check if line has exactly two elements
+                if len(params) not in (2, 3):
+                    raise SyntaxError(
+                        f"Invalid number of elements for mavproxy param decoder: {len(params)}"
+                    )
+                # Check if first element is a string
+                try:
+                    float(params[0])
+                    raise SyntaxError(
+                        "First row element must be a parameter name string"
+                    )
+                except ValueError:
+                    pass
+                # Insert empty reasoning if item 3 doesn't exist.
+                if len(params) == 2:
+                    params.append("")
+                param = build_param_from_mavproxy(params)
+                param_list.add_param(param)
+
+        if len(param_list.params) == 0:
+            raise (SyntaxError("Could not extract any parameter from file."))
+
+        return param_list
+    except SyntaxError as e:
+        raise SyntaxError(f"File is not of mavproxy format:\n{e}") from e
 
 
 def read_params(filepath: Path) -> ParameterList:
@@ -839,28 +919,13 @@ def read_params(filepath: Path) -> ParameterList:
     get_logger().debug(f"Attempting to read file {filepath}")
     protocols_recognized = 0
 
-    try:
-        param_list = read_params_xml(filepath)
-        protocols_recognized += 1
-    except eTree.ParseError:
-        get_logger().debug("File is not of XML format.")
-        pass
-
-    try:
-        param_list = read_params_ulog_param(filepath)
-        protocols_recognized += 1
-    except SyntaxError as e:
-        get_logger().debug(f"File is not of ulog format:\n{e}")
-        pass
-
-    try:
-        param_list = read_params_qgc(filepath)
-        protocols_recognized += 1
-    except SyntaxError:
-        get_logger().debug("File is not of QGC format.")
-        pass
-    # except ValueError:
-    #     pass
+    for parser in parsers:
+        try:
+            param_list = parser(filepath)
+            protocols_recognized += 1
+        except SyntaxError as e:
+            get_logger().debug(e)
+            pass
 
     if protocols_recognized == 0:
         raise SyntaxError("Could not recognize log protocol.")
