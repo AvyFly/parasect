@@ -305,7 +305,10 @@ class TestPX4ParamReaders:
 
         with pytest.raises(SyntaxError) as exc_info:
             _helpers.read_params_qgc(new_file)
-        assert str(exc_info.value) == "Third element must be a parameter name string"
+        assert (
+            str(exc_info.value)
+            == "File is not of QGC format:\nThird element must be a parameter name string"
+        )
 
     def test_qgc_3(self, tmp_path):
         """Verify that a GQC file with an invalid parameter type enum raises an error."""
@@ -329,7 +332,10 @@ class TestPX4ParamReaders:
             )  # Insert a commented-out line
         with pytest.raises(SyntaxError) as exc_info:
             _helpers.read_params_qgc(new_file)
-        assert str(exc_info.value) == "Could not extract any parameter from file."
+        assert (
+            str(exc_info.value)
+            == "File is not of QGC format:\nCould not extract any parameter from file."
+        )
 
     def test_qgc_cid_shadowing(self, tmp_path):
         """Verify that the same parameter in a different component doesn't shadow the former."""
@@ -366,7 +372,8 @@ class TestPX4ParamReaders:
         with pytest.raises(SyntaxError) as exc_info:
             _helpers.read_params_ulog_param(new_file)
         assert (
-            str(exc_info.value) == "First row element must be a parameter name string"
+            str(exc_info.value)
+            == "File is not of ulog format:\nFirst row element must be a parameter name string"
         )
 
     def test_ulog_param_empty(self, tmp_path):
@@ -377,7 +384,11 @@ class TestPX4ParamReaders:
             new_fp.writelines([])  # Insert empty file
         with pytest.raises(SyntaxError) as exc_info:
             _helpers.read_params_ulog_param(new_file)
-        assert str(exc_info.value) == "Could not extract any parameter from file."
+        print(exc_info.value)
+        assert (
+            str(exc_info.value)
+            == "File is not of ulog format:\nCould not extract any parameter from file."
+        )
 
     def test_unknown_protocol(self, tmp_path):
         """Verify an exception is thrown if the file protocol is unknown."""

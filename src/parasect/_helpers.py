@@ -3,6 +3,7 @@
 import csv
 import logging
 import math
+import numbers
 import os
 import typing
 from abc import ABC
@@ -878,6 +879,33 @@ def read_params_ulog_param(filepath: Path) -> ParameterList:
         raise SyntaxError(f"File is not of ulog format:\n{e}") from e
 
 
+def split_mavproxy_row(row: str) -> Sequence:
+    """Split a line, assuming it is mavproxy syntax."""
+    params = row.split()
+    # Check if line has exactly two elements
+    if len(params) not in (2, 3):
+        raise SyntaxError(
+            f"Invalid number of elements for mavproxy param decoder: {len(params)}"
+        )
+    # Check if first element is a string
+    try:
+        float(params[0])
+        raise SyntaxError("First row element must be a parameter name string.")
+    except ValueError:
+        pass
+    if not isinstance(params[1], numbers.Number):
+        raise SyntaxError("Second row element must be a number.")
+    try:
+        float(params[1])
+    except ValueError as e:
+        raise SyntaxError("First row element must be a parameter name string.") from e
+    # Insert empty reasoning if item 3 doesn't exist.
+    if len(params) == 2:
+        params.append("")
+
+    return params
+
+
 @parser
 def read_params_mavproxy(filepath: Path) -> ParameterList:
     """Read and parse the outputs of mavproxy."""
@@ -888,23 +916,7 @@ def read_params_mavproxy(filepath: Path) -> ParameterList:
             for line in f:  # pragma: no branch
                 if line[0] == "#":  # Skip comment lines
                     continue
-                params = line.split()
-                # Check if line has exactly two elements
-                if len(params) not in (2, 3):
-                    raise SyntaxError(
-                        f"Invalid number of elements for mavproxy param decoder: {len(params)}"
-                    )
-                # Check if first element is a string
-                try:
-                    float(params[0])
-                    raise SyntaxError(
-                        "First row element must be a parameter name string"
-                    )
-                except ValueError:
-                    pass
-                # Insert empty reasoning if item 3 doesn't exist.
-                if len(params) == 2:
-                    params.append("")
+                params = split_mavproxy_row(line)
                 param = build_param_from_mavproxy(params)
                 param_list.add_param(param)
 
