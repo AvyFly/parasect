@@ -3,7 +3,6 @@
 import csv
 import logging
 import math
-import numbers
 import os
 import typing
 from abc import ABC
@@ -893,8 +892,6 @@ def split_mavproxy_row(row: str) -> Sequence:
         raise SyntaxError("First row element must be a parameter name string.")
     except ValueError:
         pass
-    if not isinstance(params[1], numbers.Number):
-        raise SyntaxError("Second row element must be a number.")
     try:
         float(params[1])
     except ValueError as e:
