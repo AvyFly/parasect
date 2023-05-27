@@ -27,5 +27,5 @@ common:
     - [RC9_TRIM, ~, ~]
     - [RC9_MIN, ~, ~]
     - [RC9_MAX, ~, ~]
-    - [RC_CHAN_CNT, ~, ~]
-    - [SENS_DPRES_OFF, ~, ~]
+    - [BARO1_GND_PRESS, ~, ~]
+    - [COMPASS_DIA_X, ~, ~]

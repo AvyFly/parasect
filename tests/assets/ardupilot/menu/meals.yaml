@@ -3,3 +3,4 @@ my_copter_1:
   tuning: ~
   mission: ~
   header: my_copter_1
+  remove_calibration: true
