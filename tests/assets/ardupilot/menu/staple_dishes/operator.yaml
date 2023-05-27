@@ -1,0 +1,3 @@
+common:
+  ingredients:
+    - [GF_MAX_VER_DIST, ~, ~]

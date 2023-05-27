@@ -1,0 +1,8 @@
+formats:
+  apm:
+    common:
+      - "# Maintainer: George Zogopoulos"
+    variants:
+      my_copter_1:
+        common:
+          - "# Parameter set for my_copter_1"

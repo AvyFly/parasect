@@ -1,0 +1,4 @@
+common:
+  ingredients:
+    - [BATT_CAPACITY, 5000, ~]
+    - [BATT_LOW_MAH, 1000, Enough juice to RTL]

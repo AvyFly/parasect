@@ -1,0 +1,5 @@
+my_copter_1:
+  battery: ~
+  tuning: ~
+  mission: ~
+  header: my_copter_1
