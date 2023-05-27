@@ -14,6 +14,7 @@ from ._helpers import BoilerplateText
 from ._helpers import build_param_from_iter
 from ._helpers import ConfigPaths
 from ._helpers import DishModel
+from ._helpers import filter_regex
 from ._helpers import Formats
 from ._helpers import get_boilerplate
 from ._helpers import get_dish
@@ -404,18 +405,14 @@ class Meal:
         if self.remove_calibration_flag:
             get_logger().debug(f"Removing calibration for {self.name}")
             # Remove calibration values (need to keep their list up-to-date)
-            calibration_params = Calibration()
-            for param in calibration_params:
-                self.param_list.remove_param(param)
+            filter_regex([s.name for s in Calibration()], self.param_list)
 
     def remove_operator(self) -> None:
         """Remove user data from the recipe."""
         if self.remove_operator_flag:
             get_logger().debug(f"Removing user data for {self.name}")
             # Remove user-defined values
-            user_params = Operator()
-            for param in user_params:
-                self.param_list.remove_param(param)
+            filter_regex([s.name for s in Operator()], self.param_list)
 
     def apply_edits(
         self,

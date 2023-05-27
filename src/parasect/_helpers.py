@@ -4,6 +4,7 @@ import csv
 import logging
 import math
 import os
+import re
 import typing
 from abc import ABC
 from abc import abstractmethod
@@ -475,7 +476,7 @@ class Parameter:
         cid: int = 1,
     ) -> None:
         """Class constructor."""
-        self.name = name.upper()
+        self.name = name
         self.value = value
         self.param_type = param_type
         self.vid = vid
@@ -669,6 +670,15 @@ class ParameterList:
         self.params.pop(param_hash, None)
 
 
+def filter_regex(regex_list: List[str], param_list: ParameterList) -> None:
+    """Remove from param_list all parameters that match any of the regex_list."""
+    regex_obj_list = [re.compile(s) for s in regex_list]
+    for param in param_list:
+        if any(r.fullmatch(param.name) for r in regex_obj_list):
+            get_logger().debug(f"Matched {param.name} to a regex.")
+            param_list.remove_param(param)
+
+
 # Construct parameters from structured input
 ############################################
 
@@ -801,7 +811,7 @@ def read_params_xml(filepath: Path) -> ParameterList:
             group_name = group.get("name")
             for param_xml in get_group_params_xml(group):
                 param = build_param_from_xml(param_xml)
-                param.group = group_name.upper()
+                param.group = group_name
                 get_logger().debug(f"Created new parameter from XML: {param}")
                 param_list.add_param(param)
 
