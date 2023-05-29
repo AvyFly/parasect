@@ -480,7 +480,7 @@ class Meal:
     ) -> Generator[str, None, None]:
         """Grab the header and footer sections from the corresponding dish."""
         # Load common list
-        get_logger().debug("Parsing common parameters")
+        get_logger().debug("Parsing common header/footer parameters")
 
         # Read text common across text_types
         common_text = boilerplate_model.common
@@ -515,7 +515,7 @@ class Meal:
 
         INPUTS:
             option: "header" or "footer".
-            fmt: One of export Formats.
+            fmt: String representation of one of export Formats.
         """
         # Generator[str, None, None]
 
@@ -527,9 +527,9 @@ class Meal:
             return
             yield
 
-        get_logger().debug(f"Loading parameter {option} for {fmt}.")
+        get_logger().debug(f"Loading header/footer parameter {option} for {fmt}.")
         model = get_boilerplate(ConfigPaths().staple_dishes, option)
-        return self.build_header_footer(model, self.header, fmt)  # noqa
+        yield from self.build_header_footer(model, self.header, fmt)  # noqa
 
     def export_to_px4(self) -> Generator[str, None, None]:
         """Export as PX4 parameter file."""
