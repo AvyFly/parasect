@@ -628,6 +628,52 @@ class ParameterList:
         """
         return self.params.keys()
 
+    def update_param(self, param: Parameter) -> None:
+        """Update a parameter with the values of another.
+
+        All relevant values must be copied.
+        """
+        param_hash = self.build_param_hash_from_param(param)
+
+        # Try to deduce parameter type
+        if param.param_type is not None:
+            # If we know the new parameter type, use that.
+            new_value = param.value
+        elif self.params[param_hash].param_type is None:
+            # If we don't know the existing parameter type either, just paste it.
+            new_value = param.value
+        else:
+            # We know the target type, cast the new parameter value.
+            param_type = self.params[param_hash].param_type
+            new_value = cast_param_value(param.value, param_type)
+        self.params[param_hash].value = new_value
+
+        # Copy the rest of the attributes. This list must be kept up to date.
+        attr_list = [
+            "reasoning",
+            "short_desc",
+            "long_desc",
+            "default_value",
+            "min_value",
+            "max_value",
+            "increment",
+            "unit",
+            "decimal",
+            "reboot_required",
+            "readonly",
+            "group",
+            "vid",
+            "cid",
+        ]
+        for attr in attr_list:
+            try:
+                new_value = getattr(param, attr)
+            except AttributeError:
+                continue
+            if new_value and (not isinstance(new_value, str) or len(new_value) > 1):
+                # The new value is not None and if it's a string, it's not empty.
+                setattr(self.params[param_hash], attr, new_value)
+
     def add_param(
         self, param: Parameter, safe: bool = False, overwrite: bool = True
     ) -> None:
@@ -648,22 +694,7 @@ class ParameterList:
         # otherwise copy only the values
         else:
             get_logger().debug(f"Overwriting {param.name}")
-            # Try to deduce parameter type
-            if param.param_type is not None:
-                # If we know the new parameter type
-                new_value = param.value
-            elif self.params[param_hash].param_type is None:
-                # If we don't know the existing parameter type
-                new_value = param.value
-            else:
-                # We know the target type, cast the new parameter value
-                param_type = self.params[param_hash].param_type
-                new_value = cast_param_value(param.value, param_type)
-            self.params[param_hash].value = new_value
-
-            # Copy the rest of the attributes
-            self.params[param_hash].reasoning = param.reasoning
-            self.params[param_hash].readonly = param.readonly
+            self.update_param(param)
 
     def remove_param(self, param: Parameter, safe: bool = True) -> None:
         """Remove a Parameter from the list."""
