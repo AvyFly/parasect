@@ -626,8 +626,7 @@ class Meal:
         for param_name in param_hashes:
             param_name = self.param_list[param_name].name
             param_value = self.param_list[param_name].get_pretty_value()
-            reasoning = self.param_list[param_name].reasoning
-            is_readonly = reasoning.find("@READONLY") > 1
+            is_readonly = self.param_list[param_name].readonly
             if is_readonly:
                 readonly_string = "\t@READONLY"
             else:

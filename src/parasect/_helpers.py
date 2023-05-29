@@ -463,6 +463,7 @@ class Parameter:
     unit = None
     decimal = None  # Suggested increment by the parameter documentation
     reboot_required = False
+    readonly: bool
     group: Optional[str] = None
     vid: int  # Vehicle ID, default 1
     cid: int  # Component ID, default 1
@@ -481,6 +482,7 @@ class Parameter:
         self.param_type = param_type
         self.vid = vid
         self.cid = cid
+        self.readonly = False
 
     @property
     def value(self) -> Union[int, float]:
@@ -643,7 +645,7 @@ class ParameterList:
         if param_hash not in self.params:
             get_logger().debug(f"Creating new {param.name}")
             self.params[param_hash] = param
-        # otherwise copy only the value
+        # otherwise copy only the values
         else:
             get_logger().debug(f"Overwriting {param.name}")
             # Try to deduce parameter type
@@ -658,6 +660,10 @@ class ParameterList:
                 param_type = self.params[param_hash].param_type
                 new_value = cast_param_value(param.value, param_type)
             self.params[param_hash].value = new_value
+
+            # Copy the rest of the attributes
+            self.params[param_hash].reasoning = param.reasoning
+            self.params[param_hash].readonly = param.readonly
 
     def remove_param(self, param: Parameter, safe: bool = True) -> None:
         """Remove a Parameter from the list."""
@@ -772,6 +778,11 @@ def build_param_from_iter(item: Sequence) -> Parameter:
         value = 0
     param = Parameter(name, value)
     param.reasoning = reasoning
+
+    # Mark the parameter as readonly (supported in Ardupilot)
+    if reasoning and reasoning.find("@READONLY") > 1:
+        get_logger().debug(f"Marking {name} as READONLY.")
+        param.readonly = True
 
     return param
 
