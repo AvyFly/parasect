@@ -691,13 +691,15 @@ def build_filename(format: Formats, meal: Meal) -> str:
     """Generate the output filename."""
     if format == Formats.csv:
         return f"{meal.name}.csv"
-    elif format in (Formats.px4, Formats.apm):
+    elif format in (Formats.px4,):
         return f"{meal.name}.params"
     elif format == Formats.px4afv1 or format == Formats.px4afv2:
         filename = f"{meal.frame_id}_{meal.name}"
         if meal.is_hitl:
             filename += ".hil"
         return filename
+    elif format in (Formats.apm,):
+        return f"{meal.name}.param"
     else:
         raise ValueError(f"Unsupported format {format}")
 
