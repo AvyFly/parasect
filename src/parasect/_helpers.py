@@ -200,6 +200,7 @@ class Formats(Enum):
 
 
 ReservedOptions = Literal[
+    "defaults",
     "frame_id",
     "sitl",
     "hitl",

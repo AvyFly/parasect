@@ -14,6 +14,7 @@ Usage
 
    usage_create_menu
    usage_set_paths
+   usage_ardupilot
 
 .. seealso:: A full reference of the CLI and the API is available `here <Reference_>`_.
 

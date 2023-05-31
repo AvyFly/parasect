@@ -241,7 +241,7 @@ class Meal:
             self.frame_id = 0
 
         # Parse the default parameters
-        self.parse_default_parameters(default_params_filepath)
+        self.parse_default_parameters(meal_dict, configs_path, default_params_filepath)
 
         self.parse_parent(
             meal_dict,
@@ -330,11 +330,38 @@ class Meal:
             self.add_footer = True
             self.footer = meal_dict["footer"]  # type: ignore # Pydantic guarantees this is a string
 
-    def parse_default_parameters(self, default_params_filepath: Optional[Path]) -> None:
-        """Generate the default parameters list."""
-        if default_params_filepath:
+    def parse_default_parameters(
+        self,
+        meal_dict: MealType,
+        configs_path: Path,
+        default_params_filepath: Optional[Path],
+    ) -> None:
+        """Generate the default parameters list.
+
+        If a defaults path is passed in the meal, then it is used.
+        If its value is None, then explicitly don't set up any defaults.
+        If no defaults are passed in the meal, then the externally passed path is used.
+        """
+        if "defaults" in meal_dict.keys():
+            defaults_value = meal_dict["defaults"]
+            get_logger().debug(f"Using defaults from meal: {defaults_value}.")
+            if defaults_value:
+                defaults_path = Path(defaults_value)
+                # If a non-None defaults is passed,
+                # if the path passed is not absolute, assume is relative to the menu folder
+                if not defaults_path.is_absolute():
+                    defaults_path = configs_path / defaults_path
+                self.default_param_list = read_params(defaults_path)
+            else:
+                # If defaults is None, force an empty set.
+                self.default_param_list = ParameterList()
+        elif default_params_filepath:
+            get_logger().debug(
+                f"Using defaults externally passed: {default_params_filepath}."
+            )
             self.default_param_list = read_params(default_params_filepath)
         else:
+            get_logger().debug("Using empty defaults.")
             self.default_param_list = ParameterList()
 
     def load_base_parameters(self) -> None:
