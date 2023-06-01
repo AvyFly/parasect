@@ -216,7 +216,7 @@ class TestParameterList:
         """Test the __str__ operation."""
         light_meal = generic_meals["light_meal"]
         s = light_meal.__str__()
-        assert s.count("\n") == 5
+        assert s.count("\n") == 4
         assert s[0:4] == "BEEF"
 
     def test_add_illegal(self, generic_meals):
@@ -272,7 +272,7 @@ class TestPX4ParamReaders:
         parameter_list = _helpers.read_params(new_file)
         # Test if the parameter exists, is in the correct group and has the correct type and value
         assert parameter_list["ASPD_BETA_NOISE"].value == pytest.approx(0.3)
-        assert parameter_list["ASPD_BETA_NOISE"].group == "AIRSPEED VALIDATOR"
+        assert parameter_list["ASPD_BETA_NOISE"].group == "Airspeed Validator"
         assert parameter_list["ASPD_BETA_NOISE"].param_type == "FLOAT"
         assert "UNGROUPED_PARAM" in parameter_list
 

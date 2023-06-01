@@ -235,6 +235,7 @@ class TestExport:
     def test_export(self, setup_px4, build_meals):
         """Test if the export method works as expected."""
         vtol_1 = build_meals["my_vtol_1"]
+        vtol_1.apply_additions_px4()  # Invoke the aiframe file addition.
         gen = vtol_1.export_to_px4()
         lines1 = list(gen)
         lines2 = list(vtol_1.export(_helpers.Formats.px4))
