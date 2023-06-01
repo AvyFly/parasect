@@ -503,7 +503,7 @@ class Meal:
         self,
         boilerplate_model: BoilerplateText,
         variant_name: Optional[str],
-        text_type: str,
+        format_type: str,
     ) -> Generator[str, None, None]:
         """Grab the header and footer sections from the corresponding dish."""
         # Load common list
@@ -516,14 +516,14 @@ class Meal:
                 yield row + "\n"
 
         # Read text specific to the text_type
-        format_text = boilerplate_model.formats[text_type].common
+        format_text = boilerplate_model.formats[format_type].common
         if format_text is not None:
             for row in format_text:
                 yield row + "\n"
 
         # Read text specific to the meal
         if variant_name is not None:
-            variants = boilerplate_model.formats[text_type].variants
+            variants = boilerplate_model.formats[format_type].variants
             if variants is not None:
                 meal_text = variants[variant_name].common
                 for row in meal_text:  # type: ignore # Pydantic guarantees this is a List[str]
@@ -554,9 +554,12 @@ class Meal:
             return
             yield
 
-        get_logger().debug(f"Loading header/footer parameter {option} for {fmt}.")
+        variant = getattr(self, option)
+        get_logger().debug(
+            f"Loading header/footer parameter {option}/{variant} for {fmt}."
+        )
         model = get_boilerplate(ConfigPaths().staple_dishes, option)
-        yield from self.build_header_footer(model, self.header, fmt)  # noqa
+        yield from self.build_header_footer(model, variant, fmt)  # noqa
 
     def export_to_px4(self) -> Generator[str, None, None]:
         """Export as PX4 parameter file."""
