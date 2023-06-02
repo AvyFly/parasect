@@ -316,33 +316,33 @@ class TestExport:
         assert lines1 == lines2
 
 
-@pytest.mark.usefixtures("setup_generic")
+@pytest.mark.usefixtures("setup_px4")
 class TestBuildFilename:
     """Test the build_filename function."""
 
     def test_csv(self, build_meals):
         """Test the csv format."""
-        name = build_lib.build_filename(_helpers.Formats.csv, build_meals["light_meal"])
+        name = build_lib.build_filename(_helpers.Formats.csv, build_meals["my_vtol_1"])
         assert Path(name).suffix == ".csv"
 
     def test_px4(self, build_meals):
         """Test the px4 format."""
-        name = build_lib.build_filename(_helpers.Formats.px4, build_meals["light_meal"])
+        name = build_lib.build_filename(_helpers.Formats.px4, build_meals["my_vtol_1"])
         assert Path(name).suffix == ".params"
 
     def test_px4_hitl(self, build_meals):
         """Test the px4afv2 hil format."""
         name = build_lib.build_filename(
-            _helpers.Formats.px4afv2, build_meals["breakfast"]
+            _helpers.Formats.px4afv2, build_meals["my_vtol_3"]
         )
         assert Path(name).suffix == ".hil"
 
     def test_px4af(self, build_meals):
         """Test the px4 airframe format."""
         name = build_lib.build_filename(
-            _helpers.Formats.px4afv1, build_meals["light_meal"]
+            _helpers.Formats.px4afv1, build_meals["my_vtol_1"]
         )
-        assert name == "1_light_meal"
+        assert name == "1_my_vtol_1"
 
 
 class TestConvertTtrToPath:

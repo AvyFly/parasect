@@ -3,7 +3,6 @@ snack:
 
 breakfast:
   dairy: cereal
-  hitl: true
 
 light_meal:
   frame_id: 1
