@@ -192,6 +192,23 @@ class TestParameterGeneric:
         assert param.get_pretty_value() == "2.0"
 
 
+class TestParameterBuilders:
+    """Test the parameter builders."""
+
+    def test_from_iter(self):
+        """Test building parameter from iterator."""
+        iterator = ("NAME", 42, "Because I'm Batman!")
+        param = _helpers.build_param_from_iter(iterator)
+        assert param.name == "NAME"
+        assert param.value == pytest.approx(42)
+        assert "Batman" in param.reasoning
+        assert param.readonly is False
+
+        iterator = ("NAME", 42, "Because I'm Batman! @READONLY")
+        param = _helpers.build_param_from_iter(iterator)
+        assert param.readonly is True
+
+
 @pytest.mark.usefixtures("setup_generic")
 class TestParameterList:
     """Test the ParameterList class."""
@@ -243,6 +260,18 @@ class TestParameterList:
         param = _helpers.Parameter("BEEF", 100)
         assert param in light_meal.param_list
         assert "UNOBTAINIUM" not in light_meal.param_list
+
+    def test_param_cid(self):
+        """Test the correct accessing with cid."""
+        param_list = _helpers.ParameterList()
+        p1 = _helpers.Parameter(name="P1", value=1, cid=10)
+        p2 = _helpers.Parameter(name="P2", value=2, cid=20)
+        param_list.add_param(p1, safe=False)
+        param_list.add_param(p2, safe=False)
+        p1_b = param_list["P1", 10]
+        p2_b = param_list["P2", 20]
+        assert p1_b.cid == 10
+        assert p2_b.cid == 20
 
 
 class TestPX4ParamReaders:
@@ -401,3 +430,35 @@ class TestPX4ParamReaders:
         with pytest.raises(SyntaxError) as exc_info:
             _helpers.read_params(new_file)
         assert str(exc_info.value) == "Could not recognize log protocol."
+
+
+class TestArdupilotParamReaders:
+    """Test the various Ardupilot parameter file decoders."""
+
+    def test_mavproxy(self):
+        """Test reading from a parameter file saved by MAVProxy."""
+        parameter_list = _helpers.read_params(utils.ARDUPILOT_DEFAULT_PARAMS)
+        assert parameter_list["ARMING_ACCTHRESH"].value == pytest.approx(0.75)
+
+    def test_split_row(self):
+        """Test that a number as the first element throws an error."""
+        row = "42\t42"
+        with pytest.raises(SyntaxError) as exc_info:
+            _helpers.split_mavproxy_row(row)
+        assert (
+            str(exc_info.value) == "First row element must be a parameter name string."
+        )
+
+    def test_split_row_2(self):
+        """Ensure all 3 elements are decoded."""
+        row = "NAME 42 Batman"
+        result = _helpers.split_mavproxy_row(row)
+        expected = ("NAME", "42", "Batman")
+        assert all([a == b for a, b in zip(result, expected)])  # noqa: B905
+        # Disabling qa because 'strict' keyword not supported before 3.10
+
+    def test_parse_failure(self):
+        """Ensure an exception is thrown if parsing fails."""
+        with pytest.raises(SyntaxError) as exc_info:
+            _helpers.read_params_mavproxy(utils.PX4_GAZEBO_PARAMS)
+        assert "File is not of mavproxy format" in str(exc_info.value)

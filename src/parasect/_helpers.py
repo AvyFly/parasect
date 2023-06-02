@@ -11,6 +11,7 @@ from abc import abstractmethod
 from enum import Enum
 from pathlib import Path
 from typing import Any
+from typing import Callable
 from typing import Dict
 from typing import Generator
 from typing import KeysView
@@ -668,12 +669,14 @@ class ParameterList:
         ]
         for attr in attr_list:
             try:
-                new_value = getattr(param, attr)
+                new_attr_value = getattr(param, attr)
             except AttributeError:
                 continue
-            if new_value and (not isinstance(new_value, str) or len(new_value) > 1):
+            if new_attr_value and (
+                not isinstance(new_attr_value, str) or len(new_attr_value) > 1
+            ):
                 # The new value is not None and if it's a string, it's not empty.
-                setattr(self.params[param_hash], attr, new_value)
+                setattr(self.params[param_hash], attr, new_attr_value)
 
     def add_param(
         self, param: Parameter, safe: bool = False, overwrite: bool = True
@@ -822,10 +825,10 @@ def build_param_from_iter(item: Sequence) -> Parameter:
 # Read parameter text files
 ###########################
 
-parsers = []
+parsers: List[Callable[[Path], ParameterList]] = []
 
 
-def parser(parser_func):
+def parser(parser_func: Callable) -> Callable:
     """Decorator to mark and collect parser functions."""
     parsers.append(parser_func)
     return parser_func

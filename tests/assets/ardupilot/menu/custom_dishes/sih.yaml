@@ -1,5 +1,0 @@
-variants:
-  my_vtol_3:
-    common:
-      ingredients:
-        - [SIH_IXX, 0.5, ~]
