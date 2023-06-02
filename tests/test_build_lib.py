@@ -216,7 +216,7 @@ class TestMeal:
         new_fp.writelines(["ARMING_CHECK 2\n"])
         new_fp.close()
 
-        meals_menu = {
+        meals_menu_dict = {
             "my_copter_2": {
                 "defaults": f"{str(new_file)}",
                 "battery": "my_copter_2",
@@ -228,13 +228,13 @@ class TestMeal:
                 "add_new": True,
             }
         }
+        meals_menu = _helpers.MealMenuModel.parse_obj(meals_menu_dict)
 
         default_params_filepath = _helpers.ConfigPaths().default_parameters
         configs_path = _helpers.ConfigPaths().path
         my_copter_2 = build_lib.Meal(
-            meals_menu, default_params_filepath, configs_path, "my_copter_2"  # type: ignore
+            meals_menu, default_params_filepath, configs_path, "my_copter_2"
         )
-        # We don't want to be anal about meals_menu's type.
 
         assert my_copter_2.param_list["ARMING_CHECK"].value == 2
 
