@@ -232,8 +232,9 @@ class TestMeal:
         default_params_filepath = _helpers.ConfigPaths().default_parameters
         configs_path = _helpers.ConfigPaths().path
         my_copter_2 = build_lib.Meal(
-            meals_menu, default_params_filepath, configs_path, "my_copter_2"
+            meals_menu, default_params_filepath, configs_path, "my_copter_2"  # type: ignore
         )
+        # We don't want to be anal about meals_menu's type.
 
         assert my_copter_2.param_list["ARMING_CHECK"].value == 2
 

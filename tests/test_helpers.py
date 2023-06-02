@@ -201,7 +201,9 @@ class TestParameterBuilders:
         param = _helpers.build_param_from_iter(iterator)
         assert param.name == "NAME"
         assert param.value == pytest.approx(42)
-        assert "Batman" in param.reasoning
+        assert (
+            "Batman" in param.reasoning  # type: ignore # reasoning is definitely not None
+        )
         assert param.readonly is False
 
         iterator = ("NAME", 42, "Because I'm Batman! @READONLY")

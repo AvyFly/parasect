@@ -354,6 +354,8 @@ class MealMenuModel(BaseModel):
                 check_type(key, value, bool)
             elif key in ["frame_id"]:
                 check_type(key, value, int)
+            elif key in ["defaults"]:
+                check_type(key, value, (str, type(None)))
             else:  # This is a custom dish
                 check_type(key, value, (str, type(None)))
 

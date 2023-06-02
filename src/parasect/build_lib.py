@@ -346,7 +346,8 @@ class Meal:
             defaults_value = meal_dict["defaults"]
             get_logger().debug(f"Using defaults from meal: {defaults_value}.")
             if defaults_value:
-                defaults_path = Path(defaults_value)
+                defaults_path = Path(defaults_value)  # type: ignore
+                # 'defaults' is guaranteed to be a string or None. Pathing errors will surface on access.
                 # If a non-None defaults is passed,
                 # if the path passed is not absolute, assume is relative to the menu folder
                 if not defaults_path.is_absolute():
@@ -549,10 +550,8 @@ class Meal:
         # Return empty if the meal needs no header or footer.
         if option == "header" and not self.add_header:
             return
-            yield
         if option == "footer" and not self.add_footer:
             return
-            yield
 
         variant = getattr(self, option)
         get_logger().debug(
