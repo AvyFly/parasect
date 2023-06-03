@@ -56,8 +56,8 @@ Finally, the third item is a string, where you can document why you chose to inc
    .. code:: yaml
 
       common:
-      ingredients:
-         - [RC\d+_TRIM, ~, Disregard channel trim values]
+         ingredients:
+            - [RC\d+_TRIM, ~, Disregard channel trim values]
 
 ``operator.yaml``: This is a Dish (with the usual Dish syntax) that contains the names of the operator parameters
 of your autopilot. List those parameters here to: a) not take them into account when comparing parameter sets and b)
