@@ -60,7 +60,7 @@ happens mission after a reboot (``MIS_OPTIONS=0``).
 Let's save the parameter file anew, naming it ``my_copter_post_tuning.params``.
 Parasect can compare the two parameter sets and highlight the differences:
 
-.. code-block:: shell-session
+.. code-block::
 
     > parasect compare defaults.param my_copter_post_tuning.param
     File comparison : defaults.param | my_copter_post_tuning.param
@@ -195,7 +195,7 @@ All of these parameter changes will be done on top of ``defaults.param``. The pa
 
 Let's now use the :func:`compare <parasect.build>` command to build the file.
 
-.. code-block:: shell-session
+.. code-block::
 
     > parasect build -i menu -f apm -o my_parameters
 
@@ -220,7 +220,7 @@ Let's see the contents of ``my_parameters/my_copter_1.param``.
 
 Let's compare the produced file with the intended result.
 
-.. code-block:: shell-session
+.. code-block::
 
     ❯ parasect compare my_parameters/my_copter_1.param my_copter_post_tuning.param
     File comparison : my_copter_1.param | my_copter_post_tuning.param
@@ -250,7 +250,7 @@ Still, they clutter the comparison. Let's use the ``-s`` option to ignore them.
 
     We still need to point to the ``menu`` folder to let *Parasect* know where ``calibration.yaml`` is, but that can be circumvented by permanently setting the *Parasect* path, as described in `Setting Paths`_.
 
-.. code-block:: shell-session
+.. code-block::
 
     ❯ parasect compare -i menu -s my_parameters/my_copter_1.param my_copter_post_tuning.param
     File comparison : my_copter_1.param | my_copter_post_tuning.param
@@ -328,7 +328,7 @@ Finally, we edit the ``meals.yaml`` file to strip the *operator* parameters too.
 
 Let's build the files anew and compare them.
 
-.. code-block:: shell-session
+.. code-block::
 
     > parasect build -i menu -f apm -o my_parameters
     > parasect compare my_parameters/my_copter_1.param my_parameters/my_copter_2.param
@@ -351,7 +351,7 @@ Read-Only Parameters
 Oh no! Our friend came back saying that his drone crashed! He says that suddenly, as the battery got low it fell out of the sky.
 First things first, let's compare the ideal parameter file from the actual one, as our friend gave it to us (called ``friend_dump.param``).
 
-.. code-block:: shell-session
+.. code-block::
 
     > parasect compare -i menu -s my_parameters/my_copter_2.param friend_dump.param
     File comparison : my_copter_2.param | friend_dump.param
@@ -406,7 +406,7 @@ That's just what we need.
 Now, to bake the *read-only* status in the firmware, we need to use the `apj_tool`_.
 Unfortunately, *apj_tool* can fit only 8 kilobytes of parameters in the ``.apj`` file, whilst our file is a lot larger.
 
-.. code-block:: shell-session
+.. code-block:: bash
 
     > du -h my_parameters/my_copter_2.param
     24K	my_parameters/my_copter_2.param
@@ -464,9 +464,9 @@ The resulting parameter set is, as expected:
 We can now bake in the parameters in our ``.apj`` file with the `apj_tool`_.
 We assume that ``arducopter.apj`` and ``apj_tool.py`` has been copied into ``parasect_files``.
 
-.. code-block:: shell-session
+.. code-block:: bash
 
-    ❯ python3 apj_tool.py --set-file my_parameters/my_copter_2_apj.param arducopter.apj
+    > python3 apj_tool.py --set-file my_parameters/my_copter_2_apj.param arducopter.apj
     Loaded apj file of length 1809920
     Found param defaults max_length=8192 length=282
     Setting defaults from my_parameters/my_copter_2_apj.param
