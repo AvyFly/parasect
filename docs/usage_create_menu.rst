@@ -15,7 +15,7 @@ autopilot configuration. This comes down to creating a folder structure that rep
 
 .. seealso:: You can find a `generic example Meals Menu <example generic test_>`_ as well as an
    `PX4 example Meals Menu <example px4 test_>`_, that are part of the unit tests of *Parasect*.
-   Refer to it while following this guide.
+   Refer to it while following this guide or use them as a starting point for your own use cases.
 
 First, create your main *Parasect* input folder, which we'll call ``menu`` for now (the actual folder name isn't important).
 You can place this folder anywhere in your system.
@@ -30,13 +30,13 @@ Make two subfolders in it: ``custom_dishes`` and ``staple_dishes``.
 Filling in Staple Dishes
 ------------------------
 
-Each Dish is supposed to reflect one coherent set of parameters, for example related to PID gains, peripherals configuration,
+Each file contains all necessary information to create a *Dish*. A Dish is supposed to reflect one coherent set of parameters, for example related to PID gains, peripherals configuration,
 Remote Controller configuration or the installed battery.
 
 There are currently four Staple Dishes in *Parasect*: ``calibration.yaml``, ``operator.yaml``, ``header.yaml`` and
-``footer.yaml``. They are reserved dishes that are used by *Parasect* in either the comparison or generation functions.
+``footer.yaml``. They are reserved dishes that are used by *Parasect* in either the comparison or build functions.
 
-``calibration.yaml``: This is a Dish (with the usual Dish syntax) that contains the names of the calibration parameters
+``calibration.yaml``: This is a Dish that contains the names of the calibration parameters
 of your autopilot. List those parameters here to: a) not take them into account when comparing parameter sets and b)
 to remove them from generated parameter sets.
 An example Calibration Dish follows:
@@ -92,9 +92,9 @@ Each triplet refers to a single parameter and its contents are:
 If you plan to generate only one Meal (a single parameter set), then put all your parameter definitions here.
 Otherwise, put in the Common Ingredients **only** those parameters who are common across all of your Meals.
 
-Then, define your Allergen Ingredients. These are parameters who you don't want to exist in your generated parameter set.
+Then, define your Allergen Ingredients. These are parameters that you don't want to exist in your generated parameter set.
 They will be removed from the default parameters list, if you point to one as a basis of your Meal.
-Some autopilot software group their parameters in *parameter groups*. This makes it easier to mark them as allergens as
+Some autopilot software group their parameters in *parameter groups* (e.g. PX4). This makes it easier to mark them as allergens as
 a whole, by placing the group name in the Allergen Groups section of the Dish.
 
 If you plan to use slightly different versions of your Dish across the different Meals, then add a Variants section in your Dish.
@@ -113,7 +113,7 @@ Creating your Menu
 Now that your Dishes and their Variants are specified, you can bring it all together by designating Meals in your Menu.
 Create a ``meals.yaml`` file in the top-level directory of your Menu folder. This is a dictionary from strings to dictionaries.
 
-Each section represents a unique aircraft configuration and it starts with an arbitrary aircraft name.
+Each section represents a unique autopilot configuration and it starts with an arbitrary name.
 
 Then, in each row you add Dishes to your Meal. The key is the Dish name and the value is the Dish Variant. Set the
 value to None (``~``) to use only the Dish Common section. Refer to the nested Variants using a slash (``/``).
@@ -123,8 +123,12 @@ Example Meals Menu:
 .. literalinclude:: ../tests/assets/generic/menu/meals.yaml
    :language: yaml
 
+.. _meal-reserved-keywords:
 
-There are also some reserved keywords for the Meal dictionary:
+There are also some reserved, optional keywords for the Meal dictionary:
+
+* ``defaults``: Specifies a filepath where the default parameters file is found. If it is not absolute, then it is relative
+  to your menu folder. This option overrides the *Parsect* default parameters filepath configuration.
 
 * ``sitl``: Marks the Meal for Simulation-In-The-Loop (SITL) purposes. You can select to build SITL or non-SITL Meals
   with the corresponding argument of the :func:`build <parasect.build>` API function.
@@ -151,8 +155,8 @@ One such example is wanting a basic parameter set and then additional vehicles w
 parameters.
 Another example is wanting additional Meal variations configuring a camera mount or a secondary radio.
 
-Instead of re-specifying an identical Meal with the additional Dishes you can specify the base Meal as the
-``parent`` of the new Meals and specify **only the additional** Dishes.
+Instead of re-specifying an identical Meal with the additional Dishes, you can specify the base Meal as the
+``parent`` of the new Meal and specify **only the additional** Dishes.
 
 The Default Parameter set is not used for the child-Meals. The parameter set of the parent is used instead.
 Editing the parent Ingredients is thus always possible, but to add new parameters that don't exist in the parent Meal

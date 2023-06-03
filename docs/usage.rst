@@ -5,6 +5,7 @@ Usage
 .. _Reference: reference.html
 .. _MAVLink: https://mavlink.io/en/
 .. _Menu Creation: usage_create_menu.html
+.. _Ardupilot Tutorial: usage_ardupilot.html
 .. _Setting Paths: usage_set_paths.html
 .. _example generic test: https://github.com/AvyFly/parasect/tree/master/tests/assets/generic/menu
 
@@ -25,6 +26,8 @@ The primary way of using *Parasect* is as a command-line tool.
 It provides two functions, :func:`compare <parasect.compare>` and :func:`build <parasect.build>`.
 
 It is strongly recommended that you first read the `Concepts`_ that *Parasect* employs, if you plan to make full use of it.
+A long-form tutorial in using :func:`compare <parasect.compare>` and :func:`build <parasect.build>` with the Ardupilot
+ecosystem can be found `here <Ardupilot Tutorial_>`_.
 
 Compare
 ^^^^^^^
@@ -58,14 +61,14 @@ Example:
 
 * Parameters whose values are different in each file are printed in one line each.
 * Parameters that don't exist in one of the two files will be marked with an `X`
-* Parameters that have the same value in both files are not shown.
+* Parameters that have practically the same value in both files are not shown.
 
 
 Typically it is not desirable to show the differences in calibration or operation-specific parameters.
-``compare`` offers additional flags to filter out such parameters.
+:func:`compare <parasect.compare>` offers additional flags to filter out such parameters.
 
 First `create your Meals Menu <Menu Creation_>`_, filling in at least your *calibration* and *operator* *Dishes*.
-Then `learn how to point *Parasect* to it <Setting Paths_>`_.
+Then `learn how to point Parasect to it <Setting Paths_>`_.
 Finally, you can filter out the calibration parameters by
 
 .. code:: console
@@ -86,13 +89,13 @@ Build
 *Parasect* can generate parameter sets for your autopilot or fleet of autopilots.
 
 First `create your Meals Menu <Menu Creation_>`_.
-Then, you can generate the parameter sets for all your vehicles with
+Then, you can generate the parameter sets for all your vehicles with a call similar to:
 
 .. code:: console
 
    parasect build -o <output_folder> -f <output_format> -i <meals_menu_folder> -d <path_to_default_parameters_file>
 
-Partial output of `our example Meal Menu <example generic test_>`_, on .csv format:
+Here is a partial output of `our example Meal Menu <example generic test_>`_, on .csv format:
 
 .. literalinclude:: assets/generic_menu_csv/full_meal.csv
 
