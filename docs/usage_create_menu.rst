@@ -9,6 +9,7 @@ autopilot configuration. This comes down to creating a folder structure that rep
 .. _MAVLink: https://mavlink.io/en/
 .. _example px4 test: https://github.com/AvyFly/parasect/tree/master/tests/assets/px4/menu
 .. _example generic test: https://github.com/AvyFly/parasect/tree/master/tests/assets/generic/menu
+.. _Python regex: https://docs.python.org/3/library/re.html
 
 .. note:: It is highly recommended that you read the `Concepts`_ section first and get acquainted with the
    *Restaurant Analogy* that is used as nomenclature.
@@ -47,6 +48,16 @@ An example Calibration Dish follows:
 Notice how each list item is a triplet of items, representing a parameter.
 The first value is the parameter name. The second is the parameter value. For the calibration Dish you do not need to specify a value, you can leave it as None (``~``).
 Finally, the third item is a string, where you can document why you chose to include this parameter here. You can also set it to None (as ``~``).
+
+.. tip::
+
+   `Python regular expressions <Python regex_>`_ can be used to capture more than one parameter name per line, e.g.
+
+   .. code:: yaml
+
+      common:
+      ingredients:
+         - [RC\d+_TRIM, ~, Disregard channel trim values]
 
 ``operator.yaml``: This is a Dish (with the usual Dish syntax) that contains the names of the operator parameters
 of your autopilot. List those parameters here to: a) not take them into account when comparing parameter sets and b)
