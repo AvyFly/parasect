@@ -644,8 +644,13 @@ class Meal:
         # Read footer
         yield from self.retrieve_header_footer("footer", Formats.csv)
 
-    def export_to_apm(self) -> Generator[str, None, None]:
-        """Export as apm parameter file."""
+    def export_to_apm(self, include_readonly: bool) -> Generator[str, None, None]:
+        """Export as apm parameter file.
+
+        INPUTS:
+            include_readonly: flag to enable including @READONLY on a parameter.
+                Necessary for apj tools, unsuitable for loading via a GCS.
+        """
         # Read header
         yield from self.retrieve_header_footer("header", Formats.apm)
 
@@ -656,7 +661,7 @@ class Meal:
             param_name = self.param_list[param_name].name
             param_value = self.param_list[param_name].get_pretty_value()
             is_readonly = self.param_list[param_name].readonly
-            if is_readonly:
+            if include_readonly and is_readonly:
                 readonly_string = "\t@READONLY"
             else:
                 readonly_string = ""
@@ -687,7 +692,9 @@ class Meal:
             self.apply_additions_px4()
             return self.export_to_px4afv2()
         elif format == Formats.apm:
-            return self.export_to_apm()
+            return self.export_to_apm(include_readonly=False)
+        elif format == Formats.apj:
+            return self.export_to_apm(include_readonly=True)
         else:
             raise ValueError(f"Output format {format} not supported.")
 
@@ -727,7 +734,7 @@ def build_filename(format: Formats, meal: Meal) -> str:
         if meal.is_hitl:
             filename += ".hil"
         return filename
-    elif format in (Formats.apm,):
+    elif format in (Formats.apm, Formats.apj):
         return f"{meal.name}.param"
     else:
         raise ValueError(f"Unsupported format {format}")

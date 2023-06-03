@@ -364,7 +364,8 @@ First things first, let's compare the ideal parameter file from the actual one, 
     1 parameters differ
 
 Oh dear... he had set the critical battery failsafe action to *Terminate*, inadvertently causing the crash.
-We will repair his UAV, but let's make sure that doesn't happen again, by making the ``BATT_FS_CRT_ACT`` parameter *read-only*.
+We will repair his UAV, but let's make sure that doesn't happen again, by making the ``BATT_FS_CRT_ACT`` parameter *read-only*
+and use the `appropriate workflow involving the apj-tool <apj_tool_>`_ to bake in its default read-only value.
 
 We add it in the ``mission.yaml`` file and mark it accordingly.
 
@@ -376,8 +377,18 @@ We add it in the ``mission.yaml`` file and mark it accordingly.
             - [MIS_OPTIONS, 0, The default behaviour is what I want]
             - [BATT_FS_CRT_ACT, 4, Do the best thing possible apart from crashing @READONLY]
 
-*Parasect* will scan the *reasoning* section for the keyword ``@READONLY`` and will add it in the parameter file.
-We build anew and inspect the produced file.
+*Parasect* can scan the *reasoning* section for the keyword ``@READONLY`` and add it in the parameter file.
+But ``.param`` files containing the ``@READONLY`` flag cause errors when they are loaded in normal GCSs, like MAVProxy.
+Thus, the ``.param`` file to be used by the ``apj_tool.py`` will be exported as a different format: :class:`apj <parasect.Formats>`.
+
+We can build only that meal with the desired format
+
+.. code:: bash
+
+     > parasect build -i menu -f apj -c my_copter_2 -o my_parameters
+
+
+and then inspect the resulting file.
 
 .. code-block::
     :caption: my_copter_2.param

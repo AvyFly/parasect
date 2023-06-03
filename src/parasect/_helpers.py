@@ -198,6 +198,8 @@ class Formats(Enum):
     """New PX4 airframe file, version 1.11 and later."""
     apm = "apm"
     """Ardupilot-compatible file."""
+    apj = "apj"
+    """File compatible with Ardupilot's apj tool."""
 
 
 ReservedOptions = Literal[
