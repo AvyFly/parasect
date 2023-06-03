@@ -71,13 +71,11 @@ Navigate into the location where you cloned *Parasect* and install the package w
 
    $ poetry install
 
-You can now run an interactive Python session,
-or the command-line interface:
+You can now run an interactive Poetry shell, giving you access to the virtual environment.
 
 .. code:: console
 
-   $ poetry run python
-   $ poetry run parasect
+   $ poetry shell
 
 .. _Poetry: https://python-poetry.org/
 .. _Nox: https://nox.thea.codes/
@@ -127,7 +125,7 @@ Open a `pull request`_ to submit changes to this project.
 Your pull request needs to meet the following guidelines for acceptance:
 
 - The Nox test suite must pass without errors and warnings.
-- Include unit tests. You must provide tests covering 100% of your code changes and additions.
+- Include unit tests. You must provide tests covering 100% (or as close as possible) of your code changes and additions.
 - If your changes add functionality, update the documentation accordingly.
 
 Feel free to submit early. Mark your PR as WIP (Work in Progress) in the PR title, to signal that it is not in its final form yet.
