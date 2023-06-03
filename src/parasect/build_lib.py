@@ -644,7 +644,9 @@ class Meal:
         # Read footer
         yield from self.retrieve_header_footer("footer", Formats.csv)
 
-    def export_to_apm(self, include_readonly: bool) -> Generator[str, None, None]:
+    def export_to_apm(
+        self, include_readonly: bool = False
+    ) -> Generator[str, None, None]:
         """Export as apm parameter file.
 
         INPUTS:

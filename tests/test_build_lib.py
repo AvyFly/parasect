@@ -298,6 +298,20 @@ class TestExport:
         lines = list(gen)
         assert lines[0].startswith("# Ardupilot onboard parameters")
 
+    def test_export_apj(self, setup_ardupilot, build_meals):
+        """Test if exports to ardupilot parameter format does not inject the @READONLY keyword."""
+        copter_1 = build_meals["my_copter_2"]
+        gen = copter_1.export_to_apm()
+        lines = list(gen)
+        assert "@READONLY" not in lines[125]
+
+    def test_export_apj_2(self, setup_ardupilot, build_meals):
+        """Test if exports to apj format does inject the @READONLY keyword."""
+        copter_1 = build_meals["my_copter_2"]
+        gen = copter_1.export_to_apm(True)
+        lines = list(gen)
+        assert "@READONLY" in lines[125]
+
     def test_export(self, setup_px4, build_meals):
         """Test if the export method works as expected for the px4 format."""
         vtol_1 = build_meals["my_vtol_1"]
@@ -313,6 +327,14 @@ class TestExport:
         gen = my_copter_1.export_to_apm()
         lines1 = list(gen)
         lines2 = list(my_copter_1.export(_helpers.Formats.apm))
+        assert lines1 == lines2
+
+    def test_export_3(self, setup_ardupilot, build_meals):
+        """Test if the export method works as expected for the apj format."""
+        my_copter_2 = build_meals["my_copter_2"]
+        gen = my_copter_2.export_to_apm(True)
+        lines1 = list(gen)
+        lines2 = list(my_copter_2.export(_helpers.Formats.apj))
         assert lines1 == lines2
 
 
@@ -343,6 +365,16 @@ class TestBuildFilename:
             _helpers.Formats.px4afv1, build_meals["my_vtol_1"]
         )
         assert name == "1_my_vtol_1"
+
+    def test_apm(self, build_meals):
+        """Test the apm format."""
+        name = build_lib.build_filename(_helpers.Formats.apm, build_meals["my_vtol_1"])
+        assert Path(name).suffix == ".param"
+
+    def test_apj(self, build_meals):
+        """Test the apm format."""
+        name = build_lib.build_filename(_helpers.Formats.apj, build_meals["my_vtol_1"])
+        assert Path(name).suffix == ".param"
 
 
 class TestConvertTtrToPath:
