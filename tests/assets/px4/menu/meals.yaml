@@ -19,3 +19,4 @@ my_vtol_3:
   header: ~
   footer: ~
   add_new: True
+  hitl: True

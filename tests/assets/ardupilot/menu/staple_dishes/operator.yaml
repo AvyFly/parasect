@@ -1,0 +1,6 @@
+common:
+  ingredients:
+    - [RTL_ALT, ~, ~]
+    - [RTL_CONE_SLOPE, ~, ~]
+    - [RTL_LOIT_TIME, ~, ~]
+    - [FLTMODE., ~, ~]

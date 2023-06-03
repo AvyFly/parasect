@@ -1,0 +1,26 @@
+my_copter_1:
+  battery: my_copter_1
+  tuning: ~
+  mission: ~
+  header: my_copter_1
+  remove_calibration: true
+  remove_operator: true
+
+my_copter_2:
+  defaults: defaults.param
+  battery: my_copter_2
+  tuning: ~
+  mission: ~
+  header: my_copter_2
+  remove_calibration: true
+  remove_operator: true
+
+my_copter_2_apj:
+  defaults: ~
+  battery: my_copter_2
+  tuning: ~
+  mission: ~
+  header: my_copter_2
+  remove_calibration: true
+  remove_operator: true
+  add_new: true

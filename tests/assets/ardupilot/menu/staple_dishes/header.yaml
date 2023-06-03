@@ -1,0 +1,11 @@
+formats:
+  apm:
+    common:
+      - "# Ardupilot onboard parameters"
+    variants:
+      my_copter_1:
+        common:
+          - "# Parameter set for my_copter_1"
+      my_copter_2:
+        common:
+          - "# Parameter set for my_copter_2"

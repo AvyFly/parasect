@@ -4,12 +4,14 @@ import csv
 import logging
 import math
 import os
+import re
 import typing
 from abc import ABC
 from abc import abstractmethod
 from enum import Enum
 from pathlib import Path
 from typing import Any
+from typing import Callable
 from typing import Dict
 from typing import Generator
 from typing import KeysView
@@ -194,9 +196,14 @@ class Formats(Enum):
     """Legacy PX4 airframe file, prior to version 1.11."""
     px4afv2 = "px4afv2"
     """New PX4 airframe file, version 1.11 and later."""
+    apm = "apm"
+    """Ardupilot-compatible file."""
+    apj = "apj"
+    """File compatible with Ardupilot's apj tool."""
 
 
 ReservedOptions = Literal[
+    "defaults",
     "frame_id",
     "sitl",
     "hitl",
@@ -349,6 +356,8 @@ class MealMenuModel(BaseModel):
                 check_type(key, value, bool)
             elif key in ["frame_id"]:
                 check_type(key, value, int)
+            elif key in ["defaults"]:
+                check_type(key, value, (str, type(None)))
             else:  # This is a custom dish
                 check_type(key, value, (str, type(None)))
 
@@ -460,6 +469,7 @@ class Parameter:
     unit = None
     decimal = None  # Suggested increment by the parameter documentation
     reboot_required = False
+    readonly: bool
     group: Optional[str] = None
     vid: int  # Vehicle ID, default 1
     cid: int  # Component ID, default 1
@@ -473,11 +483,12 @@ class Parameter:
         cid: int = 1,
     ) -> None:
         """Class constructor."""
-        self.name = name.upper()
+        self.name = name
         self.value = value
         self.param_type = param_type
         self.vid = vid
         self.cid = cid
+        self.readonly = False
 
     @property
     def value(self) -> Union[int, float]:
@@ -623,6 +634,54 @@ class ParameterList:
         """
         return self.params.keys()
 
+    def update_param(self, param: Parameter) -> None:
+        """Update a parameter with the values of another.
+
+        All relevant values must be copied.
+        """
+        param_hash = self.build_param_hash_from_param(param)
+
+        # Try to deduce parameter type
+        if param.param_type is not None:
+            # If we know the new parameter type, use that.
+            new_value = param.value
+        elif self.params[param_hash].param_type is None:
+            # If we don't know the existing parameter type either, just paste it.
+            new_value = param.value
+        else:
+            # We know the target type, cast the new parameter value.
+            param_type = self.params[param_hash].param_type
+            new_value = cast_param_value(param.value, param_type)
+        self.params[param_hash].value = new_value
+
+        # Copy the rest of the attributes. This list must be kept up to date.
+        attr_list = [
+            "reasoning",
+            "short_desc",
+            "long_desc",
+            "default_value",
+            "min_value",
+            "max_value",
+            "increment",
+            "unit",
+            "decimal",
+            "reboot_required",
+            "readonly",
+            "group",
+            "vid",
+            "cid",
+        ]
+        for attr in attr_list:
+            try:
+                new_attr_value = getattr(param, attr)
+            except AttributeError:
+                continue
+            if new_attr_value and (
+                not isinstance(new_attr_value, str) or len(new_attr_value) > 1
+            ):
+                # The new value is not None and if it's a string, it's not empty.
+                setattr(self.params[param_hash], attr, new_attr_value)
+
     def add_param(
         self, param: Parameter, safe: bool = False, overwrite: bool = True
     ) -> None:
@@ -640,21 +699,10 @@ class ParameterList:
         if param_hash not in self.params:
             get_logger().debug(f"Creating new {param.name}")
             self.params[param_hash] = param
-        # otherwise copy only the value
+        # otherwise copy only the values
         else:
             get_logger().debug(f"Overwriting {param.name}")
-            # Try to deduce parameter type
-            if param.param_type is not None:
-                # If we know the new parameter type
-                new_value = param.value
-            elif self.params[param_hash].param_type is None:
-                # If we don't know the existing parameter type
-                new_value = param.value
-            else:
-                # We know the target type, cast the new parameter value
-                param_type = self.params[param_hash].param_type
-                new_value = cast_param_value(param.value, param_type)
-            self.params[param_hash].value = new_value
+            self.update_param(param)
 
     def remove_param(self, param: Parameter, safe: bool = True) -> None:
         """Remove a Parameter from the list."""
@@ -665,6 +713,15 @@ class ParameterList:
             raise KeyError(f"{param.name} with cid={param.cid} is not an existing key")
         get_logger().debug(f"Removing {param.name}.")
         self.params.pop(param_hash, None)
+
+
+def filter_regex(regex_list: List[str], param_list: ParameterList) -> None:
+    """Remove from param_list all parameters that match any of the regex_list."""
+    regex_obj_list = [re.compile(s) for s in regex_list]
+    for param in param_list:
+        if any(r.fullmatch(param.name) for r in regex_obj_list):
+            get_logger().debug(f"Matched {param.name} to a regex.")
+            param_list.remove_param(param)
 
 
 # Construct parameters from structured input
@@ -726,6 +783,26 @@ def build_param_from_ulog_params(row: List[str]) -> Parameter:
     return param
 
 
+def build_param_from_mavproxy(item: Sequence) -> Parameter:
+    """Convert a mavproxy parameter line to a parameter.
+
+    item should be a 3-length sequence of strings.
+    """
+    name = item[0]
+    value: Union[int, float]
+    value = item[1]
+    try:
+        value = int(item[1])
+    except ValueError:
+        value = float(item[1])
+    reasoning = item[2]
+
+    param = Parameter(name, value)
+    param.reasoning = reasoning
+
+    return param
+
+
 def build_param_from_iter(item: Sequence) -> Parameter:
     """Convert a param list item to a parameter.
 
@@ -741,11 +818,24 @@ def build_param_from_iter(item: Sequence) -> Parameter:
     param = Parameter(name, value)
     param.reasoning = reasoning
 
+    # Mark the parameter as readonly (supported in Ardupilot)
+    if reasoning and reasoning.find("@READONLY") > 1:
+        get_logger().debug(f"Marking {name} as READONLY.")
+        param.readonly = True
+
     return param
 
 
 # Read parameter text files
 ###########################
+
+parsers: List[Callable[[Path], ParameterList]] = []
+
+
+def parser(parser_func: Callable) -> Callable:
+    """Decorator to mark and collect parser functions."""
+    parsers.append(parser_func)
+    return parser_func
 
 
 def get_group_params_xml(group: XmlElement) -> Generator[XmlElement, None, None]:
@@ -757,79 +847,142 @@ def get_group_params_xml(group: XmlElement) -> Generator[XmlElement, None, None]
     yield from group.findall("parameter")
 
 
+@parser
 def read_params_xml(filepath: Path) -> ParameterList:
     """Read and parse an PX4-style XML parameter list."""
-    tree = eTree.parse(filepath)
-    root = tree.getroot()
+    try:
+        tree = eTree.parse(filepath)
+        root = tree.getroot()
 
-    param_list = ParameterList()
+        param_list = ParameterList()
 
-    # Parse all parameter groups
-    for group in root.findall("group"):
-        group_name = group.get("name")
-        for param_xml in get_group_params_xml(group):
+        # Parse all parameter groups
+        for group in root.findall("group"):
+            group_name = group.get("name")
+            for param_xml in get_group_params_xml(group):
+                param = build_param_from_xml(param_xml)
+                param.group = group_name
+                get_logger().debug(f"Created new parameter from XML: {param}")
+                param_list.add_param(param)
+
+        # Parse all loose parameters
+        for param_xml in root.findall("parameter"):
             param = build_param_from_xml(param_xml)
-            param.group = group_name.upper()
-            get_logger().debug(f"Created new parameter from XML: {param}")
             param_list.add_param(param)
 
-    # Parse all loose parameters
-    for param_xml in root.findall("parameter"):
-        param = build_param_from_xml(param_xml)
-        param_list.add_param(param)
-
-    return param_list
+        return param_list
+    except eTree.ParseError as e:
+        raise SyntaxError("File is not of XML format.") from e
 
 
+@parser
 def read_params_qgc(filepath: Path) -> ParameterList:
     """Read and parse a QGC/AMC/Auterion Suite parameters file."""
     param_list = ParameterList()
 
-    with open(filepath) as csvfile:
-        param_reader = csv.reader(csvfile, delimiter="\t")
-        for param_row in param_reader:  # pragma: no branch
-            get_logger().debug(f"Examining line: {param_row}")
-            if len(param_row) == 0:  # Skip empty lines
-                continue
-            if param_row[0][0] == "#":  # Skip comment lines
-                continue
-            # Test for wrong number of elements
-            if len(param_row) != 5:
-                raise SyntaxError("Wrong number of line elements")
-            param = build_param_from_qgc(param_row)
-            param_list.add_param(param)
+    try:
+        with open(filepath) as csvfile:
+            param_reader = csv.reader(csvfile, delimiter="\t")
+            for param_row in param_reader:  # pragma: no branch
+                get_logger().debug(f"Examining line: {param_row}")
+                if len(param_row) == 0:  # Skip empty lines
+                    continue
+                if param_row[0][0] == "#":  # Skip comment lines
+                    continue
+                # Test for wrong number of elements
+                if len(param_row) != 5:
+                    raise SyntaxError("Wrong number of line elements")
+                param = build_param_from_qgc(param_row)
+                param_list.add_param(param)
 
-    if len(param_list.params) == 0:
-        raise (SyntaxError("Could not extract any parameter from file."))
+        if len(param_list.params) == 0:
+            raise (SyntaxError("Could not extract any parameter from file."))
 
-    return param_list
+        return param_list
+    except SyntaxError as e:
+        raise SyntaxError(f"File is not of QGC format:\n{e}") from e
 
 
+@parser
 def read_params_ulog_param(filepath: Path) -> ParameterList:
     """Read and parse the outputs of the ulog_params program."""
     param_list = ParameterList()
 
-    with open(filepath) as csvfile:
-        param_reader = csv.reader(csvfile, delimiter=",")
-        for param_row in param_reader:  # pragma: no branch
-            # Check if line has exactly two elements
-            if len(param_row) != 2:
-                raise SyntaxError(
-                    f"Invalid number of elements for ulog param decoder: {len(param_row)}"
-                )
-            # Check if first element is a string
-            try:
-                float(param_row[0])
-                raise SyntaxError("First row element must be a parameter name string")
-            except ValueError:
-                pass
-            param = build_param_from_ulog_params(param_row)
-            param_list.add_param(param)
+    try:
+        with open(filepath) as csvfile:
+            param_reader = csv.reader(csvfile, delimiter=",")
+            for param_row in param_reader:  # pragma: no branch
+                if param_row[0][0] == "#":  # Skip comment lines
+                    continue
+                # Check if line has exactly two elements
+                if len(param_row) != 2:
+                    raise SyntaxError(
+                        f"Invalid number of elements for ulog param decoder: {len(param_row)}"
+                    )
+                # Check if first element is a string
+                try:
+                    float(param_row[0])
+                    raise SyntaxError(
+                        "First row element must be a parameter name string"
+                    )
+                except ValueError:
+                    pass
+                param = build_param_from_ulog_params(param_row)
+                param_list.add_param(param)
 
-    if len(param_list.params) == 0:
-        raise (SyntaxError("Could not extract any parameter from file."))
+        if len(param_list.params) == 0:
+            raise (SyntaxError("Could not extract any parameter from file."))
 
-    return param_list
+        return param_list
+    except SyntaxError as e:
+        raise SyntaxError(f"File is not of ulog format:\n{e}") from e
+
+
+def split_mavproxy_row(row: str) -> Sequence:
+    """Split a line, assuming it is mavproxy syntax."""
+    params = row.split()
+    # Check if line has exactly two elements
+    if len(params) not in (2, 3):
+        raise SyntaxError(
+            f"Invalid number of elements for mavproxy param decoder: {len(params)}"
+        )
+    # Check if first element is a string
+    try:
+        float(params[0])
+        raise SyntaxError("First row element must be a parameter name string.")
+    except ValueError:
+        pass
+    try:
+        float(params[1])
+    except ValueError as e:
+        raise SyntaxError("First row element must be a parameter name string.") from e
+    # Insert empty reasoning if item 3 doesn't exist.
+    if len(params) == 2:
+        params.append("")
+
+    return params
+
+
+@parser
+def read_params_mavproxy(filepath: Path) -> ParameterList:
+    """Read and parse the outputs of mavproxy."""
+    param_list = ParameterList()
+
+    try:
+        with open(filepath) as f:
+            for line in f:  # pragma: no branch
+                if line[0] == "#":  # Skip comment lines
+                    continue
+                params = split_mavproxy_row(line)
+                param = build_param_from_mavproxy(params)
+                param_list.add_param(param)
+
+        if len(param_list.params) == 0:
+            raise (SyntaxError("Could not extract any parameter from file."))
+
+        return param_list
+    except SyntaxError as e:
+        raise SyntaxError(f"File is not of mavproxy format:\n{e}") from e
 
 
 def read_params(filepath: Path) -> ParameterList:
@@ -837,28 +990,13 @@ def read_params(filepath: Path) -> ParameterList:
     get_logger().debug(f"Attempting to read file {filepath}")
     protocols_recognized = 0
 
-    try:
-        param_list = read_params_xml(filepath)
-        protocols_recognized += 1
-    except eTree.ParseError:
-        get_logger().debug("File is not of XML format.")
-        pass
-
-    try:
-        param_list = read_params_ulog_param(filepath)
-        protocols_recognized += 1
-    except SyntaxError as e:
-        get_logger().debug(f"File is not of ulog format:\n{e}")
-        pass
-
-    try:
-        param_list = read_params_qgc(filepath)
-        protocols_recognized += 1
-    except SyntaxError:
-        get_logger().debug("File is not of QGC format.")
-        pass
-    # except ValueError:
-    #     pass
+    for parser in parsers:
+        try:
+            param_list = parser(filepath)
+            protocols_recognized += 1
+        except SyntaxError as e:
+            get_logger().debug(e)
+            pass
 
     if protocols_recognized == 0:
         raise SyntaxError("Could not recognize log protocol.")

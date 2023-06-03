@@ -1,0 +1,8 @@
+common:
+  ingredients:
+    - [LOIT_SPEED, 1500, I like things a bit fast]
+    - [ATC_ANG_PIT_P, 5, It can use a bit more oomph here]
+    - [ATC_ANG_RLL_P, 5, It can use a bit more oomph here]
+    - [ATC_RATE_R_MAX, 60, "It's a big bird, so let's take it slow"]
+    - [ATC_RATE_P_MAX, 60, "It's a big bird, so let's take it slow"]
+    - [ATC_ANGLE_BOOST, 1, ~]

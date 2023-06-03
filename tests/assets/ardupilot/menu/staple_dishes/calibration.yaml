@@ -1,0 +1,7 @@
+common:
+  ingredients:
+    - [RC\d+_TRIM, ~, ~]
+    - [RC\d+_MIN, ~, ~]
+    - [RC\d+_MAX, ~, ~]
+    - [BARO1_GND_PRESS, ~, ~]
+    - [COMPASS_DIA_., ~, ~]

@@ -1,0 +1,8 @@
+common:
+  ingredients:
+    - [MIS_OPTIONS, 0, For peace of mind restart the mission]
+    - [
+        BATT_FS_CRT_ACT,
+        4,
+        Do the best thing possible apart from crashing @READONLY,
+      ]

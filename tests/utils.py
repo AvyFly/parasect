@@ -20,6 +20,10 @@ PX4_GAZEBO_PARAMS = Path(PX4_ASSETS_PATH) / "default_gazebo_3fe4c6e.params"
 PX4_INPUT_FOLDER = Path(PX4_ASSETS_PATH) / "menu"
 PX4_ULOG_PARAMS_FILE = PX4_ASSETS_PATH / "6fcfa754-186b-41ae-90a4-8de386f712c3.params"
 
+PX4_ASSETS_PATH = Path(path.dirname(path.abspath(__file__))) / "assets" / "ardupilot"
+ARDUPILOT_INPUT_FOLDER = Path(PX4_ASSETS_PATH) / "menu"
+ARDUPILOT_DEFAULT_PARAMS = Path(PX4_ASSETS_PATH) / "sitl_copter_defaults.parm"
+
 
 @pytest.fixture(name="setup_generic")
 def fixture_setup_generic():
@@ -46,6 +50,15 @@ def fixture_setup_px4():
     """Set up the parasect paths for PX4 testing."""
     os.environ["PARASECT_PATH"] = str(PX4_INPUT_FOLDER)
     os.environ["PARASECT_DEFAULTS"] = str(PX4_DEFAULT_PARAMS_XML)
+
+    parasect._helpers.ConfigPaths().clear()
+
+
+@pytest.fixture(name="setup_ardupilot")
+def fixture_setup_ardupilot():
+    """Set up the parasect paths for Ardupilot testing."""
+    os.environ["PARASECT_PATH"] = str(ARDUPILOT_INPUT_FOLDER)
+    os.environ["PARASECT_DEFAULTS"] = str(ARDUPILOT_DEFAULT_PARAMS)
 
     parasect._helpers.ConfigPaths().clear()
 

@@ -9,6 +9,7 @@ from typing import Tuple
 from typing import Union
 
 from ._helpers import ConfigPaths
+from ._helpers import filter_regex
 from ._helpers import get_logger
 from ._helpers import read_params
 from .build_lib import Calibration
@@ -39,13 +40,15 @@ def get_vehicles_comparison(
 
     # Remove calibration parameters from both lists
     if nocal:
-        param_list_1 -= Calibration().param_list
-        param_list_2 -= Calibration().param_list
+        get_logger().debug("Removing calibration from comparison sets")
+        filter_regex([s.name for s in Calibration()], param_list_1)
+        filter_regex([s.name for s in Calibration()], param_list_2)
 
     # Remove user parameters from both lists
     if noop:
-        param_list_1 -= Operator().param_list
-        param_list_2 -= Operator().param_list
+        get_logger().debug("Removing operator params from comparison sets")
+        filter_regex([s.name for s in Operator()], param_list_1)
+        filter_regex([s.name for s in Operator()], param_list_2)
 
     # Generate comparison results
     comparison_results = list()
@@ -99,7 +102,7 @@ def compare_parameter_lists(
     """Compare two parameter lists, potentially filtering with vid and cid.
 
     Returns a list of tuples. Each tuple contains the old parameter and the new parameter.
-    None is inserted if parameter does not exist
+    None is inserted if parameter does not exist.
     """
     param_names_1 = param_list_1.keys()
     param_names_2 = param_list_2.keys()

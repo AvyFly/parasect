@@ -3,6 +3,9 @@ from pathlib import Path
 
 import pytest
 
+from .utils import (  # noqa: F401 # setup_ardupilot is used by pytest as string
+    fixture_setup_ardupilot,
+)
 from .utils import (  # noqa: F401 # setup_generic is used by pytest as string
     fixture_setup_generic,
 )
@@ -153,7 +156,7 @@ class TestMeal:
         assert "BEEF" in light_meal.param_list
         param = _helpers.Parameter("BEEF", 100)
         assert param in light_meal.param_list
-        assert "UNOBTAINIUM" not in light_meal.param_list
+        assert "UNOBTAINIUM" not in light_meal
 
     def test_allergens(self, setup_px4, build_meals):
         """Make sure allergens defined in custom dishes are removed."""
@@ -178,6 +181,62 @@ class TestMeal:
         """Make sure new parameters lookup the defaults for their type."""
         vtol_3 = build_meals["my_vtol_3"]
         assert vtol_3.param_list["SIH_IXX"].param_type == "FLOAT"
+
+    def test_defaults_override(self, setup_ardupilot, build_meals):
+        """Make sure that the defaults keyword can load a file.
+
+        No defaults keyword will result in the PARASECT_DEFAULTS being used.
+        """
+        copter_1 = build_meals["my_copter_1"]
+        assert copter_1.param_list["ARMING_CHECK"].value == 1
+
+    def test_defaults_override_2(self, setup_ardupilot, build_meals):
+        """Make sure that the defaults keyword can load a file.
+
+        sitl_copter_defaults.parm in assets folder has ARMING_CHECK=1.
+        """
+        copter_1 = build_meals["my_copter_1"]
+        assert copter_1.param_list["ARMING_CHECK"].value == 1
+
+    def test_defaults_override_3(self, setup_ardupilot, build_meals):
+        """Make sure that the defaults keyword can load a file.
+
+        defaults.param in menu folder has ARMING_CHECK=0.
+        """
+        copter_2_apj = build_meals["my_copter_2_apj"]
+        assert not ("ARMING_CHECK" in copter_2_apj)
+
+    def test_defaults_override_4(self, setup_ardupilot, tmp_path):
+        """Make sure that the defaults keyword can load a file.
+
+        defaults overrides with absolute path get correctly resolved.
+        """
+        new_file = tmp_path / "my_defaults.param"
+        new_fp = open(new_file, "w")
+        new_fp.writelines(["ARMING_CHECK 2\n"])
+        new_fp.close()
+
+        meals_menu_dict = {
+            "my_copter_2": {
+                "defaults": f"{str(new_file)}",
+                "battery": "my_copter_2",
+                "tuning": None,
+                "mission": None,
+                "header": "my_copter_2",
+                "remove_calibration": True,
+                "remove_operator": True,
+                "add_new": True,
+            }
+        }
+        meals_menu = _helpers.MealMenuModel.parse_obj(meals_menu_dict)
+
+        default_params_filepath = _helpers.ConfigPaths().default_parameters
+        configs_path = _helpers.ConfigPaths().path
+        my_copter_2 = build_lib.Meal(
+            meals_menu, default_params_filepath, configs_path, "my_copter_2"
+        )
+
+        assert my_copter_2.param_list["ARMING_CHECK"].value == 2
 
 
 class TestExport:
@@ -232,35 +291,90 @@ class TestExport:
             gen = vtol_1.export_to_px4af(3)
             list(gen)
 
+    def test_export_apm(self, setup_ardupilot, build_meals):
+        """Test if exports to ardupilot parameter format work."""
+        copter_1 = build_meals["my_copter_1"]
+        gen = copter_1.export_to_apm()
+        lines = list(gen)
+        assert lines[0].startswith("# Ardupilot onboard parameters")
+
+    def test_export_apj(self, setup_ardupilot, build_meals):
+        """Test if exports to ardupilot parameter format does not inject the @READONLY keyword."""
+        copter_1 = build_meals["my_copter_2"]
+        gen = copter_1.export_to_apm()
+        lines = list(gen)
+        assert "@READONLY" not in lines[125]
+
+    def test_export_apj_2(self, setup_ardupilot, build_meals):
+        """Test if exports to apj format does inject the @READONLY keyword."""
+        copter_1 = build_meals["my_copter_2"]
+        gen = copter_1.export_to_apm(True)
+        lines = list(gen)
+        assert "@READONLY" in lines[125]
+
     def test_export(self, setup_px4, build_meals):
-        """Test if the export method works as expected."""
+        """Test if the export method works as expected for the px4 format."""
         vtol_1 = build_meals["my_vtol_1"]
+        vtol_1.apply_additions_px4()  # Invoke the aiframe file addition.
         gen = vtol_1.export_to_px4()
         lines1 = list(gen)
         lines2 = list(vtol_1.export(_helpers.Formats.px4))
         assert lines1 == lines2
 
+    def test_export_2(self, setup_ardupilot, build_meals):
+        """Test if the export method works as expected for the apm format."""
+        my_copter_1 = build_meals["my_copter_1"]
+        gen = my_copter_1.export_to_apm()
+        lines1 = list(gen)
+        lines2 = list(my_copter_1.export(_helpers.Formats.apm))
+        assert lines1 == lines2
 
-@pytest.mark.usefixtures("setup_generic")
+    def test_export_3(self, setup_ardupilot, build_meals):
+        """Test if the export method works as expected for the apj format."""
+        my_copter_2 = build_meals["my_copter_2"]
+        gen = my_copter_2.export_to_apm(True)
+        lines1 = list(gen)
+        lines2 = list(my_copter_2.export(_helpers.Formats.apj))
+        assert lines1 == lines2
+
+
+@pytest.mark.usefixtures("setup_px4")
 class TestBuildFilename:
     """Test the build_filename function."""
 
     def test_csv(self, build_meals):
         """Test the csv format."""
-        name = build_lib.build_filename(_helpers.Formats.csv, build_meals["light_meal"])
+        name = build_lib.build_filename(_helpers.Formats.csv, build_meals["my_vtol_1"])
         assert Path(name).suffix == ".csv"
 
     def test_px4(self, build_meals):
         """Test the px4 format."""
-        name = build_lib.build_filename(_helpers.Formats.px4, build_meals["light_meal"])
+        name = build_lib.build_filename(_helpers.Formats.px4, build_meals["my_vtol_1"])
         assert Path(name).suffix == ".params"
+
+    def test_px4_hitl(self, build_meals):
+        """Test the px4afv2 hil format."""
+        name = build_lib.build_filename(
+            _helpers.Formats.px4afv2, build_meals["my_vtol_3"]
+        )
+        assert Path(name).suffix == ".hil"
 
     def test_px4af(self, build_meals):
         """Test the px4 airframe format."""
         name = build_lib.build_filename(
-            _helpers.Formats.px4afv1, build_meals["light_meal"]
+            _helpers.Formats.px4afv1, build_meals["my_vtol_1"]
         )
-        assert name == "1_light_meal"
+        assert name == "1_my_vtol_1"
+
+    def test_apm(self, build_meals):
+        """Test the apm format."""
+        name = build_lib.build_filename(_helpers.Formats.apm, build_meals["my_vtol_1"])
+        assert Path(name).suffix == ".param"
+
+    def test_apj(self, build_meals):
+        """Test the apm format."""
+        name = build_lib.build_filename(_helpers.Formats.apj, build_meals["my_vtol_1"])
+        assert Path(name).suffix == ".param"
 
 
 class TestConvertTtrToPath:

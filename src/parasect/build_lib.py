@@ -14,6 +14,7 @@ from ._helpers import BoilerplateText
 from ._helpers import build_param_from_iter
 from ._helpers import ConfigPaths
 from ._helpers import DishModel
+from ._helpers import filter_regex
 from ._helpers import Formats
 from ._helpers import get_boilerplate
 from ._helpers import get_dish
@@ -207,7 +208,9 @@ class Meal:
     frame_id: int
     is_sitl = False
     is_hitl = False
+    add_header = False
     header: Optional[str] = None
+    add_footer = False
     footer: Optional[str] = None
     parent: Optional["Meal"] = None
     add_new = False
@@ -238,7 +241,7 @@ class Meal:
             self.frame_id = 0
 
         # Parse the default parameters
-        self.parse_default_parameters(default_params_filepath)
+        self.parse_default_parameters(meal_dict, configs_path, default_params_filepath)
 
         self.parse_parent(
             meal_dict,
@@ -293,11 +296,6 @@ class Meal:
 
         self.remove_operator()
 
-        # Add the AUTOSTART value for each configuration
-        autostart = Parameter("SYS_AUTOSTART", self.frame_id)
-        autostart.param_type = "INT32"
-        self.param_list.add_param(autostart, safe=(not self.add_new))
-
     def parse_parent(
         self,
         meal_dict: MealType,
@@ -316,21 +314,55 @@ class Meal:
     def parse_header_footer(self, meal_dict: MealType) -> None:
         """Store the desired header and footer files."""
         # Bring in the parent's options first
-        if self.parent:
+        if self.parent and self.parent.add_header:
+            self.add_header = True
             self.header = self.parent.header
+
+        if self.parent and self.parent.add_footer:
+            self.add_footer = True
             self.footer = self.parent.footer
 
         # Overwrite with newly specified ones
         if "header" in meal_dict.keys():
+            self.add_header = True
             self.header = meal_dict["header"]  # type: ignore # Pydantic guarantees this is a string
         if "footer" in meal_dict.keys():
+            self.add_footer = True
             self.footer = meal_dict["footer"]  # type: ignore # Pydantic guarantees this is a string
 
-    def parse_default_parameters(self, default_params_filepath: Optional[Path]) -> None:
-        """Generate the default parameters list."""
-        if default_params_filepath:
+    def parse_default_parameters(
+        self,
+        meal_dict: MealType,
+        configs_path: Path,
+        default_params_filepath: Optional[Path],
+    ) -> None:
+        """Generate the default parameters list.
+
+        If a defaults path is passed in the meal, then it is used.
+        If its value is None, then explicitly don't set up any defaults.
+        If no defaults are passed in the meal, then the externally passed path is used.
+        """
+        if "defaults" in meal_dict.keys():
+            defaults_value = meal_dict["defaults"]
+            get_logger().debug(f"Using defaults from meal: {defaults_value}.")
+            if defaults_value:
+                defaults_path = Path(defaults_value)  # type: ignore
+                # 'defaults' is guaranteed to be a string or None. Pathing errors will surface on access.
+                # If a non-None defaults is passed,
+                # if the path passed is not absolute, assume is relative to the menu folder
+                if not defaults_path.is_absolute():
+                    defaults_path = configs_path / defaults_path
+                self.default_param_list = read_params(defaults_path)
+            else:
+                # If defaults is None, force an empty set.
+                self.default_param_list = ParameterList()
+        elif default_params_filepath:
+            get_logger().debug(
+                f"Using defaults externally passed: {default_params_filepath}."
+            )
             self.default_param_list = read_params(default_params_filepath)
         else:
+            get_logger().debug("Using empty defaults.")
             self.default_param_list = ParameterList()
 
     def load_base_parameters(self) -> None:
@@ -401,18 +433,14 @@ class Meal:
         if self.remove_calibration_flag:
             get_logger().debug(f"Removing calibration for {self.name}")
             # Remove calibration values (need to keep their list up-to-date)
-            calibration_params = Calibration()
-            for param in calibration_params:
-                self.param_list.remove_param(param)
+            filter_regex([s.name for s in Calibration()], self.param_list)
 
     def remove_operator(self) -> None:
         """Remove user data from the recipe."""
         if self.remove_operator_flag:
             get_logger().debug(f"Removing user data for {self.name}")
             # Remove user-defined values
-            user_params = Operator()
-            for param in user_params:
-                self.param_list.remove_param(param)
+            filter_regex([s.name for s in Operator()], self.param_list)
 
     def apply_edits(
         self,
@@ -476,11 +504,11 @@ class Meal:
         self,
         boilerplate_model: BoilerplateText,
         variant_name: Optional[str],
-        text_type: str,
+        format_type: Formats,
     ) -> Generator[str, None, None]:
         """Grab the header and footer sections from the corresponding dish."""
         # Load common list
-        get_logger().debug("Parsing common parameters")
+        get_logger().debug("Parsing common header/footer parameters")
 
         # Read text common across text_types
         common_text = boilerplate_model.common
@@ -489,14 +517,14 @@ class Meal:
                 yield row + "\n"
 
         # Read text specific to the text_type
-        format_text = boilerplate_model.formats[text_type].common
+        format_text = boilerplate_model.formats[format_type.value].common
         if format_text is not None:
             for row in format_text:
                 yield row + "\n"
 
         # Read text specific to the meal
         if variant_name is not None:
-            variants = boilerplate_model.formats[text_type].variants
+            variants = boilerplate_model.formats[format_type.value].variants
             if variants is not None:
                 meal_text = variants[variant_name].common
                 for row in meal_text:  # type: ignore # Pydantic guarantees this is a List[str]
@@ -510,12 +538,32 @@ class Meal:
         """Answer if the Meal contains a parameter."""
         return self.param_list.__contains__(item)
 
+    def retrieve_header_footer(
+        self, option: str, fmt: Formats
+    ) -> Generator[str, None, None]:
+        """Retrieve a header or footer for a format export.
+
+        INPUTS:
+            option: "header" or "footer".
+            fmt: String representation of one of export Formats.
+        """
+        # Return empty if the meal needs no header or footer.
+        if option == "header" and not self.add_header:
+            return
+        if option == "footer" and not self.add_footer:
+            return
+
+        variant = getattr(self, option)
+        get_logger().debug(
+            f"Loading header/footer parameter {option}/{variant} for {fmt}."
+        )
+        model = get_boilerplate(ConfigPaths().staple_dishes, option)
+        yield from self.build_header_footer(model, variant, fmt)  # noqa
+
     def export_to_px4(self) -> Generator[str, None, None]:
         """Export as PX4 parameter file."""
         # Read header
-        get_logger().debug("Loading parameter header")
-        header_model = get_boilerplate(ConfigPaths().staple_dishes, "header")
-        yield from self.build_header_footer(header_model, self.header, "px4")
+        yield from self.retrieve_header_footer("header", Formats.px4)
 
         param_hashes = sorted(self.param_list.keys())
         for param_hash in param_hashes:
@@ -540,17 +588,15 @@ class Meal:
         # Diversivy versions
         if version == 1:
             directive = "set"
-            dish = "px4afv1"
+            dish = Formats.px4afv1
         elif version == 2:
             directive = "set-default"
-            dish = "px4afv2"
+            dish = Formats.px4afv2
         else:
             raise ValueError(f"PX4 aiframe version {version} not supported.")
 
         # Read header
-        get_logger().debug("Loading parameter header.")
-        header_dish = get_boilerplate(ConfigPaths().staple_dishes, "header")
-        yield from self.build_header_footer(header_dish, self.header, dish)
+        yield from self.retrieve_header_footer("header", dish)
 
         if not self.is_sitl:
             indentation = "\t"
@@ -565,9 +611,7 @@ class Meal:
             yield f"{indentation}param {directive} {param_name} {param_value}\n"
 
         # Read footer
-        get_logger().debug("Loading parameter footer.")
-        footer_dict = get_boilerplate(ConfigPaths().staple_dishes, "footer")
-        yield from self.build_header_footer(footer_dict, self.footer, dish)
+        yield from self.retrieve_header_footer("footer", dish)
 
     def export_to_px4afv1(self) -> Generator[str, None, None]:
         """Export as legacy PX4 airframe file.
@@ -586,9 +630,7 @@ class Meal:
     def export_to_csv(self) -> Generator[str, None, None]:
         """Export as csv file."""
         # Read header
-        get_logger().debug("Loading parameter header.")
-        header_dish = get_boilerplate(ConfigPaths().staple_dishes, "header")
-        yield from self.build_header_footer(header_dish, self.header, "csv")
+        yield from self.retrieve_header_footer("header", Formats.csv)
 
         indentation = ""
 
@@ -600,20 +642,61 @@ class Meal:
             yield f"{indentation}{param_name},{param_value}\n"
 
         # Read footer
-        get_logger().debug("Loading parameter footer.")
-        footer_dict = get_boilerplate(ConfigPaths().staple_dishes, "footer")
-        yield from self.build_header_footer(footer_dict, self.footer, "csv")
+        yield from self.retrieve_header_footer("footer", Formats.csv)
+
+    def export_to_apm(
+        self, include_readonly: bool = False
+    ) -> Generator[str, None, None]:
+        """Export as apm parameter file.
+
+        INPUTS:
+            include_readonly: flag to enable including @READONLY on a parameter.
+                Necessary for apj tools, unsuitable for loading via a GCS.
+        """
+        # Read header
+        yield from self.retrieve_header_footer("header", Formats.apm)
+
+        indentation = ""
+
+        param_hashes = sorted(self.param_list.keys())
+        for param_name in param_hashes:
+            param_name = self.param_list[param_name].name
+            param_value = self.param_list[param_name].get_pretty_value()
+            is_readonly = self.param_list[param_name].readonly
+            if include_readonly and is_readonly:
+                readonly_string = "\t@READONLY"
+            else:
+                readonly_string = ""
+
+            yield f"{indentation}{param_name}\t{param_value}{readonly_string}\n"
+
+        # Read footer
+        yield from self.retrieve_header_footer("footer", Formats.apm)
+
+    def apply_additions_px4(self) -> None:
+        # Add the AUTOSTART value for each configuration
+        autostart = Parameter("SYS_AUTOSTART", self.frame_id)
+        autostart.param_type = "INT32"
+        self.param_list.add_param(autostart, safe=(not self.add_new))
 
     def export(self, format: Formats) -> Iterable[str]:
         """Export general method."""
+        # Perform format-related additions.
         if format == Formats.csv:
             return self.export_to_csv()
         elif format == Formats.px4:
+            self.apply_additions_px4()
             return self.export_to_px4()
         elif format == Formats.px4afv1:
+            self.apply_additions_px4()
             return self.export_to_px4afv1()
         elif format == Formats.px4afv2:
+            self.apply_additions_px4()
             return self.export_to_px4afv2()
+        elif format == Formats.apm:
+            return self.export_to_apm(include_readonly=False)
+        elif format == Formats.apj:
+            return self.export_to_apm(include_readonly=True)
         else:
             raise ValueError(f"Output format {format} not supported.")
 
@@ -646,20 +729,22 @@ def build_filename(format: Formats, meal: Meal) -> str:
     """Generate the output filename."""
     if format == Formats.csv:
         return f"{meal.name}.csv"
-    elif format == Formats.px4:
+    elif format in (Formats.px4,):
         return f"{meal.name}.params"
     elif format == Formats.px4afv1 or format == Formats.px4afv2:
         filename = f"{meal.frame_id}_{meal.name}"
         if meal.is_hitl:
             filename += ".hil"
         return filename
+    elif format in (Formats.apm, Formats.apj):
+        return f"{meal.name}.param"
     else:
         raise ValueError(f"Unsupported format {format}")
 
 
 def build_helper(
     meal_ordered: Optional[str],
-    format: Union[Formats, str],
+    format: Formats,
     input_folder: Optional[str],
     default_params: Optional[str],
     output_folder: Optional[str] = None,
@@ -697,14 +782,7 @@ def build_helper(
             f"Setting DEFAULT_PARAMS override to {ConfigPaths().default_parameters}"
         )
 
-    if isinstance(format, str):
-        output_format = Formats(format)
-    else:
-        output_format = format
-
-    get_logger().debug(
-        f"Building configuration {meal_ordered} for format {output_format}"
-    )
+    get_logger().debug(f"Building configuration {meal_ordered} for format {format}")
 
     # Generate the meals
     meals_dict = build_meals(meal_list)
@@ -725,11 +803,11 @@ def build_helper(
             if (not sitl) and meal.is_sitl:
                 continue
 
-            export_meal(meal, output_format, output_folder_path)
+            export_meal(meal, format, output_folder_path)
     else:
         # Export only a single config
         meal = meals_dict[meal_list[0]]
-        export_meal(meal, output_format, output_folder_path)
+        export_meal(meal, format, output_folder_path)
 
 
 def convert_str_to_path(path: Optional[str]) -> Optional[Path]:

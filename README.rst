@@ -59,6 +59,7 @@ Features
 
 List of currently supported autopilots:
 
+* Ardupilot_
 * PX4_
 
 Requirements
@@ -81,6 +82,14 @@ You can install *Parasect* via pip_ from PyPI_:
 .. code:: console
 
    $ pip install parasect
+
+If you don't care about using *Parasect* as a library and are only interested in
+command-line use, you can also use `pipx`_, that provides better isolation from
+the rest of the system:
+
+.. code:: console
+
+   $ pipx install parasect
 
 
 Usage
@@ -130,17 +139,22 @@ This project was sponsored by `Avy B.V. <Avy_>`_, a UAV company in Amsterdam.
 
 This project was generated from `@cjolowicz`_'s `Hypermodern Python Cookiecutter`_ template.
 
+The project logo was created by `Cynthia de Vries <Cynthia_>`_.
+
 .. _@cjolowicz: https://github.com/cjolowicz
+.. _Cynthia: https://www.linkedin.com/in/cynthia-de-vries-497991231/
 .. _Cookiecutter: https://github.com/audreyr/cookiecutter
 .. _MIT license: https://opensource.org/licenses/MIT
 .. _PyPI: https://pypi.org/
 .. _Hypermodern Python Cookiecutter: https://github.com/cjolowicz/cookiecutter-hypermodern-python
 .. _file an issue: https://github.com/AvyFly/parasect/issues
 .. _pip: https://pip.pypa.io/
+.. _pipx: https://github.com/pypa/pipx
 .. _CLI usage: https://parasect.readthedocs.io/en/latest/reference.html#cli-reference
 .. _API usage: https://parasect.readthedocs.io/en/latest/reference.html#api-reference
 .. _Concepts: https://parasect.readthedocs.io/en/latest/concepts.html
 .. _PX4: https://px4.io/
+.. _Ardupilot: https://ardupilot.org/
 .. _Poetry: https://python-poetry.org/
 .. _Avy: https://avy.eu
 .. github-only
