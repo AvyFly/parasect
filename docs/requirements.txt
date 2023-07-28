@@ -1,4 +1,4 @@
 furo==2023.5.20
-sphinx==6.2.1
+sphinx==7.1.1
 sphinx-click==4.4.0
 directory-tree==0.0.3.1
