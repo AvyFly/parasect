@@ -259,7 +259,7 @@ Still, they clutter the comparison. Let's use the ``-s`` option to ignore them.
     0 parameters differ
 
 Great! The produced parameter file is exactly as we wanted it!
-We can write it in our UAV as many times as we want to reset the parameters to their intended values, without fear of overwritign the calibration!
+We can write it in our UAV as many times as we want to reset the parameters to their intended values, without fear of overwriting the calibration!
 
 Another UAV Variant
 -------------------
@@ -343,7 +343,7 @@ Let's build the files anew and compare them.
 
 Excellent! That's just what we wanted!
 
-Let's give this new airframe to a friend! He needs a platform to brush up his flyig skills.
+Let's give this new airframe to a friend! He needs a platform to brush up his flying skills.
 
 Read-Only Parameters
 --------------------
@@ -413,7 +413,7 @@ Unfortunately, *apj_tool* can fit only 8 kilobytes of parameters in the ``.apj``
 
 We have to make a concession and strip our parameter file from the default parameters.
 The downside is that we can no longer use the same parameter file with our GCS to reset all the parameters to the intended value.
-But we can easily circumvent this issue by simply creating a parameter file exclusively for this use, and explicity setting defaults to ``None``.
+But we can easily circumvent this issue by simply creating a parameter file exclusively for this use, and explicitly setting defaults to ``None``.
 
 .. code-block:: yaml
     :caption: meals.yaml
@@ -462,7 +462,7 @@ The resulting parameter set is, as expected:
     MIS_OPTIONS	0
 
 We can now bake in the parameters in our ``.apj`` file with the `apj_tool`_.
-We assume that ``arducopter.apj`` and ``apj_tool.py`` has been copied into ``parasect_files``.
+We assume that ``arducopter.apj`` and ``apj_tool.py`` have been copied into ``parasect_files``.
 
 .. code-block:: bash
 

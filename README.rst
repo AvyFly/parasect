@@ -70,7 +70,7 @@ When you install *Parasect* via pip_ its requirements will also be installed aut
 
 Currently *Parasect* has been tested:
 
-* in Continuous Integration servers for **Ubuntu Linux**, **Windows**
+* in Continuous Integration servers for **Ubuntu Linux**, **Windows** and **MacOS**.
 * manually in **Ubuntu Linux**.
 
 
