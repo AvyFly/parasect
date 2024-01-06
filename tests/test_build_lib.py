@@ -29,7 +29,7 @@ def build_meals():
 @pytest.fixture
 def build_dish_model():
     """Return a simple DishModel."""
-    return _helpers.DishModel.parse_obj(
+    return _helpers.DishModel.model_validate(
         {
             "common": None,
             "variants": {
@@ -72,7 +72,7 @@ class TestDish:
 
     def test_empty_subvariant(self, build_dish_model):
         """Test that a recipe with empty subvariant returns empty."""
-        model = _helpers.DishModel.parse_obj(
+        model = _helpers.DishModel.model_validate(
             {
                 "common": None,
                 "variants": {"var1": {"variants": {"var2": {"common": None}}}},
@@ -138,7 +138,7 @@ class TestDishGeneric:
 
     def test_no_variant(self):
         """Test that a Dish without a variant can be parsed."""
-        model = _helpers.DishModel.parse_obj(
+        model = _helpers.DishModel.model_validate(
             {"common": {"ingredients": [["ING1", 1, ""]]}, "variants": None}
         )
         dish = build_lib.Dish(
@@ -228,7 +228,7 @@ class TestMeal:
                 "add_new": True,
             }
         }
-        meals_menu = _helpers.MealMenuModel.parse_obj(meals_menu_dict)
+        meals_menu = _helpers.MealMenuModel.model_validate(meals_menu_dict)
 
         default_params_filepath = _helpers.ConfigPaths().default_parameters
         configs_path = _helpers.ConfigPaths().path

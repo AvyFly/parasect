@@ -127,25 +127,25 @@ class TestMealMenuModel:
         """Test if a MealMenu asks for a non-existing dish."""
         bad_dish = {"meal_1": {"dish_1": None, "non_existing_dish": None}}
         with pytest.raises(pydantic.ValidationError):
-            _helpers.MealMenuModel.parse_obj(bad_dish)
+            _helpers.MealMenuModel.model_validate(bad_dish)
 
     def test_bad_parent(self):
         """Verify that a non-string parent raises an error."""
         bad_dish = {"bad_parent": {"parent": 1, "dish_1": None}}
         with pytest.raises(pydantic.ValidationError):
-            _helpers.MealMenuModel.parse_obj(bad_dish)
+            _helpers.MealMenuModel.model_validate(bad_dish)
 
     def test_bad_header(self):
         """Verify that a non-string parent raises an error."""
         bad_dish = {"bad_header": {"header": 1, "dish_1": None}}
         with pytest.raises(pydantic.ValidationError):
-            _helpers.MealMenuModel.parse_obj(bad_dish)
+            _helpers.MealMenuModel.model_validate(bad_dish)
 
     def test_bad_footer(self):
         """Verify that a non-string footer raises an error."""
         bad_dish = {"bad_footer": {"footer": 1, "dish_1": None}}
         with pytest.raises(pydantic.ValidationError):
-            _helpers.MealMenuModel.parse_obj(bad_dish)
+            _helpers.MealMenuModel.model_validate(bad_dish)
 
 
 @pytest.mark.usefixtures("setup_generic")
