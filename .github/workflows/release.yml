@@ -12,14 +12,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v3.5.2
+        uses: actions/checkout@v3.6.0
         with:
           fetch-depth: 2
 
       - name: Set up Python
-        uses: actions/setup-python@v4.6.1
+        uses: actions/setup-python@v4.7.0
         with:
           python-version: "3.11"
+          python-version-file: pyproject.toml
 
       - name: Upgrade pip
         run: |
