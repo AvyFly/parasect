@@ -249,6 +249,15 @@ class TestExport:
         line1 = next(gen)
         assert line1.startswith("# Parameter file")
 
+    def test_header_empty(self, setup_generic, build_meals):
+        """Test if a meal with no header requirement is correctly handled."""
+        light_meal = build_meals["light_meal"]
+        light_meal.header = None
+        light_meal.add_header = False
+        gen = light_meal.export_to_px4afv1()
+        line1 = next(gen)
+        assert not line1.startswith("# Parameter file")
+
     def test_variant(self, setup_generic, build_meals):
         """Test if the variants are generated correctly."""
         full_meal = build_meals["full_meal"]
@@ -270,6 +279,19 @@ class TestExport:
         lines = list(gen)
         assert lines[0].startswith("# Onboard parameters")
 
+    def test_export_px4_no_type(self, setup_generic, build_meals):
+        """Test if exports with no parameter type fail."""
+        light_meal = build_meals["light_meal"]
+        with pytest.raises(TypeError):
+            list(light_meal.export_to_px4())
+
+    def test_export_px4_bad_type(self, setup_generic, build_meals):
+        """Test if exports with bad parameter type fail."""
+        light_meal = build_meals["light_meal"]
+        light_meal.param_list["BEEF"].param_type = "BAD_TYPE"
+        with pytest.raises(TypeError):
+            list(light_meal.export_to_px4())
+
     def test_export_px4afv1(self, setup_px4, build_meals):
         """Test if exports to legacy PX4 airframe format work as expected."""
         vtol_1 = build_meals["my_vtol_1"]
@@ -290,6 +312,13 @@ class TestExport:
         with pytest.raises(ValueError):
             gen = vtol_1.export_to_px4af(3)
             list(gen)
+
+    def test_export_px4af_sitl_indentation(self, setup_px4, build_meals):
+        """Ensure no indentation is applied when building SITL airframes."""
+        vtol_4 = build_meals["my_vtol_4"]
+        gen = vtol_4.export_to_px4afv2()
+        lines = list(gen)
+        assert lines[28].startswith("param set")
 
     def test_export_apm(self, setup_ardupilot, build_meals):
         """Test if exports to ardupilot parameter format work."""
