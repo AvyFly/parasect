@@ -19,6 +19,7 @@ from ._helpers import Formats
 from ._helpers import get_boilerplate
 from ._helpers import get_dish
 from ._helpers import get_logger
+from ._helpers import get_mavlink_param_type_from_string
 from ._helpers import get_meals_menu
 from ._helpers import MealMenuModel
 from ._helpers import MealType
@@ -570,14 +571,16 @@ class Meal:
             param_name = self.param_list[param_hash].name
             param_value = self.param_list[param_hash].get_pretty_value()
             internal_type = self.param_list[param_hash].param_type
-            if internal_type == "FLOAT":
-                param_type = 9
-            elif internal_type == "INT32":
-                param_type = 6
-            else:
+            if internal_type is None:
                 raise TypeError(
-                    f"Unknown parameter type {internal_type} for parameter {param_name}"
+                    f"Cannot handle None PARAM_TYPE for parameter {param_name}"
                 )
+            try:
+                param_type = get_mavlink_param_type_from_string(internal_type)
+            except ValueError as e:
+                raise TypeError(
+                    f"Unknown PARAM_TYPE {internal_type} for parameter {param_name}"
+                ) from e
 
             vid = self.param_list[param_hash].vid
             cid = self.param_list[param_hash].cid
