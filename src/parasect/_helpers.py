@@ -789,7 +789,7 @@ def build_param_from_mavproxy(item: Sequence) -> Parameter:
     item should be a 3-length sequence of strings.
     """
     name = item[0]
-    value: Union[int, float]
+    value: Union[int, float, str]
     value = item[1]
     try:
         value = int(item[1])

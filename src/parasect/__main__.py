@@ -64,7 +64,7 @@ def compare(
     input_folder: Optional[str],
     nocal: bool,
     noop: bool,
-    component: int,
+    component: Optional[int],
 ) -> None:
     """Compare command."""
     s = compare_helper(file_1, file_2, input_folder, nocal, noop, component)
@@ -109,11 +109,11 @@ def compare(
     help="Specify the default parameters file to apply to all Meals.",
 )
 def build(
-    config: str,
+    config: Optional[str],
     format: str,
     input_folder: Optional[str],
-    default_parameters: str,
-    output_folder: str,
+    default_parameters: Optional[str],
+    output_folder: Optional[str],
 ) -> None:
     """Build command."""
     build_helper(
