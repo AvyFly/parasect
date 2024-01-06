@@ -72,9 +72,10 @@ jobs:
           repository_url: https://test.pypi.org/legacy/
 
       - name: Publish the release notes
+        if: "! steps.check-version.outputs.tag"
         uses: release-drafter/release-drafter@v5.24.0
         with:
-          publish: ${{ steps.check-version.outputs.tag != '' }}
+          publish: false
           tag: ${{ steps.check-version.outputs.tag }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
