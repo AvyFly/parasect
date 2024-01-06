@@ -26,7 +26,8 @@ from xml.etree.ElementTree import Element as XmlElement  # noqa: S405
 import yaml  # type: ignore
 from defusedxml import ElementTree as eTree  # type: ignore
 from pydantic import BaseModel
-from pydantic import root_validator
+from pydantic import model_validator
+from pydantic import RootModel
 from pydantic import StrictBool
 
 
@@ -218,24 +219,24 @@ StapleDishesNames = Literal["calibration", "user_defined", "header", "footer"]
 StapleDishesNamesSequence = typing.get_args(StapleDishesNames)
 
 
-class Substances(BaseModel):
+class Substances(RootModel):
     """A general list of substances.
 
     Each is made up by its name, its value and a justification.
     """
 
-    __root__: List[Tuple[str, Optional[Union[float, int]], Optional[str]]]
+    root: List[Tuple[str, Optional[Union[float, int]], Optional[str]]]
 
     def __iter__(self):
         """Return an interable of the model."""
-        return iter(self.__root__)
+        return iter(self.root)
 
 
 class Allergens(BaseModel, extra="forbid"):
     """Contains lists of parameters that are to be removed."""
 
-    substances: Optional[Substances]
-    groups: Optional[Substances]
+    substances: Optional[Substances] = None
+    groups: Optional[Substances] = None
 
 
 class Recipe(BaseModel, extra="forbid"):
@@ -248,18 +249,18 @@ class Recipe(BaseModel, extra="forbid"):
 class DishModel(BaseModel, extra="forbid"):
     """A complete dish."""
 
-    common: Optional[Recipe]
-    variants: Optional[Dict[str, "DishModel"]]
+    common: Optional[Recipe] = None
+    variants: Optional[Dict[str, "DishModel"]] = None
 
 
 class FormatText(BaseModel, extra="forbid"):
     """Boilerplate text for export formats."""
 
-    common: Optional[List[str]]
-    variants: Optional[Dict[str, "FormatText"]]
+    common: Optional[List[str]] = None
+    variants: Optional[Dict[str, "FormatText"]] = None
 
 
-FormatText.update_forward_refs()
+FormatText.model_rebuild()
 
 
 class BoilerplateText(BaseModel):
@@ -268,14 +269,14 @@ class BoilerplateText(BaseModel):
     For header and footer specification.
     """
 
-    common: Optional[List[str]]
+    common: Optional[List[str]] = None
     formats: Dict[str, FormatText]
 
 
 MealType = Dict[str, Optional[Union[StrictBool, int, str]]]
 MealsType = Dict[str, MealType]
 
-DishModel.update_forward_refs()
+DishModel.model_rebuild()
 
 
 def check_type(key: str, value: Any, des_type: Any) -> None:
@@ -284,15 +285,17 @@ def check_type(key: str, value: Any, des_type: Any) -> None:
         raise TypeError(f"Value of {key}={value} should be {des_type}.")
 
 
-class MealMenuModel(BaseModel):
+class MealMenuModel(RootModel):
     """The description of the whole meals catalogue."""
 
-    __root__: MealsType
+    root: MealsType
 
-    @root_validator
+    @model_validator(mode="after")
+    @classmethod
     def _check_entries(cls, values):  # noqa: B902
+        print(values)
         # Iterate over the meals
-        for meal, content in values["__root__"].items():
+        for meal, content in values.root.items():
             # Iterate over the dishes
             for dish_name in content.keys():
                 cls._check_content_names(dish_name, meal)
@@ -363,11 +366,11 @@ class MealMenuModel(BaseModel):
 
     def __getitem__(self, item):
         """Access the model in a dict-like manner."""
-        return self.__root__[item]
+        return self.root[item]
 
     def keys(self) -> KeysView:
         """Return all dict keys."""
-        return self.__root__.keys()
+        return self.root.keys()
 
 
 class CalibrationModel(BaseModel):
@@ -413,14 +416,14 @@ def get_dish(path: Path, dish_name: str) -> DishModel:
     """
     filepath = path / (dish_name + ".yaml")
     dictionary = _build_dict_from_yaml(filepath)
-    return DishModel.parse_obj(dictionary)
+    return DishModel.model_validate(dictionary)
 
 
 def get_boilerplate(path: Path, dish_name: str) -> BoilerplateText:
     """Read a boilerplate text model."""
     filepath = path / (dish_name + ".yaml")
     dictionary = _build_dict_from_yaml(filepath)
-    return BoilerplateText.parse_obj(dictionary)
+    return BoilerplateText.model_validate(dictionary)
 
 
 def get_meals_menu(filepath: Path) -> MealMenuModel:
@@ -433,7 +436,7 @@ def get_meals_menu(filepath: Path) -> MealMenuModel:
         MealMenuModel: A Pydantic model
     """
     dictionary = _build_dict_from_yaml(filepath)
-    return MealMenuModel.parse_obj(dictionary)
+    return MealMenuModel.model_validate(dictionary)
 
 
 ##################################
