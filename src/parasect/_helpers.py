@@ -444,23 +444,74 @@ def get_meals_menu(filepath: Path) -> MealMenuModel:
 ##################################
 
 
+def get_mavlink_param_type_from_string(internal_type: str) -> int:
+    """Convert a string representation of the value type into MAV_PARAM_TYPE.
+
+    Follows the definitions of https://mavlink.io/en/messages/common.html#MAV_PARAM_TYPE.
+    """
+    matchings = {
+        "FLOAT64": 10,
+        "FLOAT32": 9,
+        "FLOAT": 9,
+        "INT64": 8,
+        "UINT64": 7,
+        "INT32": 6,
+        "UINT32": 5,
+        "INT16": 4,
+        "UINT16": 3,
+        "INT8": 2,
+        "UINT8": 1,
+    }
+    try:
+        return matchings[internal_type]
+    except KeyError as e:
+        raise ValueError(
+            f"Unknown internal parameter type value {internal_type}"
+        ) from e
+
+
+def get_string_from_mavlink_param_type(param_type: int) -> str:
+    """Convert a MAV_PARAM_TYPE into its string representation.
+
+    Follows the definitions of https://mavlink.io/en/messages/common.html#MAV_PARAM_TYPE.
+    """
+    matching = {
+        10: "FLOAT64",
+        9: "FLOAT32",
+        8: "INT64",
+        7: "UINT64",
+        6: "INT32",
+        5: "UINT32",
+        4: "INT16",
+        3: "UINT16",
+        2: "INT8",
+        1: "UINT8",
+    }
+    try:
+        return matching[param_type]
+    except KeyError as e:
+        raise ValueError(f"Unknown PARAM_TYPE {param_type}") from e
+
+
 def cast_param_value(value: Any, param_type: Optional[str]) -> Union[int, float]:
     """Convert a string to a parameter value of the given type."""
     if param_type is None:
         raise TypeError("Unknown type to cast value to.")
-    elif param_type == "INT32":
+    try:
+        numeric_value = get_mavlink_param_type_from_string(param_type)
+    except ValueError as e:
+        raise TypeError from e
+    if numeric_value <= 8:
         return int(value)
-    elif param_type == "FLOAT":
-        return float(value)
     else:
-        raise TypeError(f"Unhandled parameter type {param_type}")
+        return float(value)
 
 
 class Parameter:
     """A class describing a single parameter."""
 
     name: str
-    param_type: Optional[str]  # String, either FLOAT or INT32
+    param_type: Optional[str]  # String, according to get_string_from_px4_value_type
     _value: Union[int, float]
     reasoning = None
     short_desc = None
@@ -508,15 +559,22 @@ class Parameter:
 
     def __str__(self) -> str:
         """__str__ dunder method."""
-        if self.param_type == "FLOAT":
-            type_str = "F"
-            value_str = f"{self.value:f}"
-        elif self.param_type == "INT32":
-            type_str = "I"
-            value_str = f"{self.value:d}"
-        else:
+        if self.param_type is None:
             type_str = ""
             value_str = f"{self.value}"
+        else:
+            try:
+                mavlink_param_type = get_mavlink_param_type_from_string(self.param_type)
+            except ValueError:
+                type_str = ""
+                value_str = f"{self.value}"
+            else:
+                if mavlink_param_type in [9, 10]:
+                    type_str = "F"
+                    value_str = f"{self.value:f}"
+                else:
+                    type_str = "I"
+                    value_str = f"{self.value:d}"
 
         return f"{self.name:16} ({type_str}):\t{value_str}"
 
@@ -755,13 +813,7 @@ def build_param_from_qgc(row: List[str]) -> Parameter:
     except ValueError:
         param_name = row[2]
     param_type_num = int(row[4])
-    if param_type_num == 6:
-        param_type = "INT32"
-    elif param_type_num == 9:
-        param_type = "FLOAT"
-    else:
-        raise ValueError(f"Unknown parameter type: {param_type_num}")
-
+    param_type = get_string_from_mavlink_param_type(param_type_num)
     param_value = cast_param_value(row[3], param_type)
 
     param = Parameter(param_name, param_value)

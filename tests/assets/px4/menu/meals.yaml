@@ -20,3 +20,11 @@ my_vtol_3:
   footer: ~
   add_new: True
   hitl: True
+
+my_vtol_4:
+  frame_id: 4
+  battery: ~
+  tuning: my_vtol_1
+  header: ~
+  footer: ~
+  sitl: True

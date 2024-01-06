@@ -170,13 +170,13 @@ class TestParameterGeneric:
     def test_get_pretty_value_float_float(self):
         """Verify that float values typed as float have their trailling zeros deleted."""
         param = _helpers.Parameter("TEMP", 1.10)
-        param.param_type = "FLOAT"
+        param.param_type = "FLOAT32"
         assert param.get_pretty_value() == "1.1"
 
     def test_get_pretty_value_float_float_2(self):
         """Verify that float values typed as float at least one decimal."""
         param = _helpers.Parameter("TEMP", 1)
-        param.param_type = "FLOAT"
+        param.param_type = "FLOAT32"
         assert param.get_pretty_value() == "1.0"
 
     def test_int_type(self):
@@ -187,7 +187,7 @@ class TestParameterGeneric:
 
     def test_int_type_2(self):
         """Test that in a FLOAT parameter an int is cast into an float."""
-        param = _helpers.Parameter("TEMP", 1, "FLOAT")
+        param = _helpers.Parameter("TEMP", 1, "FLOAT32")
         param.value = 2
         assert param.get_pretty_value() == "2.0"
 
@@ -351,7 +351,7 @@ class TestPX4ParamReaders:
 
         with pytest.raises(ValueError) as exc_info:
             _helpers.read_params_qgc(new_file)
-        assert str(exc_info.value) == "Unknown parameter type: 42"
+        assert str(exc_info.value) == "Unknown PARAM_TYPE 42"
 
     def test_qgc_empty(self, tmp_path):
         """Verify that an exception is raised from empty input."""
@@ -442,6 +442,21 @@ class TestArdupilotParamReaders:
         parameter_list = _helpers.read_params(utils.ARDUPILOT_DEFAULT_PARAMS)
         assert parameter_list["ARMING_ACCTHRESH"].value == pytest.approx(0.75)
 
+    def test_mavproxy_empty(self, tmp_path):
+        """Test that a file with no parameters throws an error."""
+        path = tmp_path
+        new_file = path / "empty.params"
+        content = ["# Comment 1\n", "# Comment 2\n"]
+        new_fp = open(new_file, "w")
+        new_fp.writelines(content)
+        new_fp.close()
+        with pytest.raises(SyntaxError) as exc_info:
+            _helpers.read_params_mavproxy(new_file)
+        assert (
+            str(exc_info.value)
+            == "File is not of mavproxy format:\nCould not extract any parameter from file."
+        )
+
     def test_split_row(self):
         """Test that a number as the first element throws an error."""
         row = "42\t42"
@@ -464,3 +479,11 @@ class TestArdupilotParamReaders:
         with pytest.raises(SyntaxError) as exc_info:
             _helpers.read_params_mavproxy(utils.PX4_GAZEBO_PARAMS)
         assert "File is not of mavproxy format" in str(exc_info.value)
+
+    def test_qgc_rare_types(self):
+        """Ensure that value types 2,4,6,9 are correctly read."""
+        parameter_list = _helpers.read_params(utils.ARDUPILOT_ODD_PARAM_VALUES_FILE)
+        assert parameter_list["ACRO_TRAINER"].value == 2
+        assert parameter_list["ANGLE_MAX"].value == 3000
+        assert parameter_list["ARMING_CHECK"].value == 8214
+        assert parameter_list["ACRO_BAL_PITCH"].value == pytest.approx(1)

@@ -23,6 +23,7 @@ PX4_ULOG_PARAMS_FILE = PX4_ASSETS_PATH / "6fcfa754-186b-41ae-90a4-8de386f712c3.p
 PX4_ASSETS_PATH = Path(path.dirname(path.abspath(__file__))) / "assets" / "ardupilot"
 ARDUPILOT_INPUT_FOLDER = Path(PX4_ASSETS_PATH) / "menu"
 ARDUPILOT_DEFAULT_PARAMS = Path(PX4_ASSETS_PATH) / "sitl_copter_defaults.parm"
+ARDUPILOT_ODD_PARAM_VALUES_FILE = Path(PX4_ASSETS_PATH) / "black_20231221.params"
 
 
 @pytest.fixture(name="setup_generic")
