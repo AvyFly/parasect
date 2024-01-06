@@ -35,12 +35,13 @@ jobs:
 
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v3.5.2
+        uses: actions/checkout@v3.6.0
 
       - name: Set up Python ${{ matrix.python }}
         uses: actions/setup-python@v4.7.0
         with:
           python-version: ${{ matrix.python }}
+          python-version-file: pyproject.toml
 
       - name: Upgrade pip
         run: |
@@ -114,12 +115,13 @@ jobs:
     needs: tests
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v3.5.2
+        uses: actions/checkout@v3.6.0
 
       - name: Set up Python
         uses: actions/setup-python@v4.6.1
         with:
           python-version: "3.11"
+          python-version-file: pyproject.toml
 
       - name: Upgrade pip
         run: |
