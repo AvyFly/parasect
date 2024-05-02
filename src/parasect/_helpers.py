@@ -1026,6 +1026,9 @@ def read_params_mavproxy(filepath: Path) -> ParameterList:
     try:
         with open(filepath) as f:
             for line in f:  # pragma: no branch
+                get_logger().debug(f"Mavproxy examining line: {line}")
+                if len(line) == 1:  # Skip empty lines
+                    continue
                 if line[0] == "#":  # Skip comment lines
                     continue
                 params = split_mavproxy_row(line)
