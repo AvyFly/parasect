@@ -225,7 +225,7 @@ class Substances(RootModel):
     root: list[tuple[str, float | int | None, str | None]]
 
     def __iter__(self):
-        """Return an interable of the model."""
+        """Return an iterable of the model."""
         return iter(self.root)
 
 

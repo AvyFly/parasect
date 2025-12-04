@@ -43,7 +43,7 @@ class TestLogger:
         assert all(tests)
 
     def test_new_log_file(self):
-        """Test if a new log file is indeed crated at the start of the program."""
+        """Test if a new log file is indeed created at the start of the program."""
         _helpers.Logger().clear()
         log_file = Path("./parasect.log")
         log_file.write_text("old line")
@@ -107,7 +107,7 @@ class TestConfigPathsPX4:
         assert _helpers.ConfigPaths().default_parameters == custom_path
 
     def test_no_parameters(self):
-        """Ensure it is possbile not to have set any default parameters path."""
+        """Ensure it is possible not to have set any default parameters path."""
         del os.environ["PARASECT_DEFAULTS"]
         _helpers.ConfigPaths().DEFAULT_PARAMS_PATH = None
         assert _helpers.ConfigPaths().default_parameters is None
@@ -168,7 +168,7 @@ class TestParameterGeneric:
         assert param.get_pretty_value() == "1"
 
     def test_get_pretty_value_float_float(self):
-        """Verify that float values typed as float have their trailling zeros deleted."""
+        """Verify that float values typed as float have their trailing zeros deleted."""
         param = _helpers.Parameter("TEMP", 1.10)
         param.param_type = "FLOAT32"
         assert param.get_pretty_value() == "1.1"
