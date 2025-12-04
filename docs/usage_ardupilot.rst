@@ -413,7 +413,7 @@ Unfortunately, *apj_tool* can fit only 8 kilobytes of parameters in the ``.apj``
 
 We have to make a concession and strip our parameter file from the default parameters.
 The downside is that we can no longer use the same parameter file with our GCS to reset all the parameters to the intended value.
-But we can easily circumvent this issue by simply creating a parameter file exclusively for this use, and explicity setting defaults to ``None``.
+But we can easily circumvent this issue by simply creating a parameter file exclusively for this use, and explicitly setting defaults to ``None``.
 
 .. code-block:: yaml
     :caption: meals.yaml

@@ -143,7 +143,7 @@ class TestDishGeneric:
         )
         dish = build_lib.Dish(
             model, "var1"
-        )  # Ask for a varient even if it doesn't exist
+        )  # Ask for a variant even if it doesn't exist
         assert "ING1" in dish
 
 
