@@ -1,8 +1,4 @@
 """Test cases for the private build_lib module."""
-from typing import List  # noqa: F401 # Older mypy needs this import
-from typing import Optional  # noqa: F401 # Older mypy needs this import
-from typing import Tuple  # noqa: F401 # Older mypy needs this import
-
 import pytest
 
 from . import utils
@@ -139,11 +135,11 @@ class TestGetColumnLegnths:
 
     def test_1(self):
         """Test the case where param_1 == None."""
-        param_list = [
+        param_list: list[tuple[Parameter | None, Parameter | None]] = [
             (None, Parameter("P", 0)),
             (None, Parameter("P1", 10)),
             (None, Parameter("Q", 1)),
-        ]  # type: List[Tuple[Optional[Parameter], Optional[Parameter]]]
+        ]
         c1, c2, c3 = compare_lib.get_column_lengths(param_list)
         assert c1 == 2
         assert c2 == 1
@@ -151,11 +147,11 @@ class TestGetColumnLegnths:
 
     def test_2(self):
         """Test the case where param_1 != None."""
-        param_list = [
+        param_list: list[tuple[Parameter | None, Parameter | None]] = [
             (Parameter("P", 0), None),
             (Parameter("P1", 10), None),
             (Parameter("Q", 1), None),
-        ]  # type: List[Tuple[Optional[Parameter], Optional[Parameter]]]
+        ]
         c1, c2, c3 = compare_lib.get_column_lengths(param_list)
         assert c1 == 2
         assert c2 == 2

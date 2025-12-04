@@ -27,7 +27,7 @@ repos:
         entry: end-of-file-fixer
         language: system
         types: [text]
-        stages: [commit, push, manual]
+        stages: [pre-commit, pre-push, manual]
       - id: flake8
         name: flake8
         entry: flake8
@@ -40,7 +40,7 @@ repos:
         entry: pyupgrade
         language: system
         types: [python]
-        args: [--py37-plus]
+        args: [--py310-plus]
       - id: reorder-python-imports
         name: Reorder python imports
         entry: reorder-python-imports
@@ -52,7 +52,7 @@ repos:
         entry: trailing-whitespace-fixer
         language: system
         types: [text]
-        stages: [commit, push, manual]
+        stages: [pre-commit, pre-push, manual]
         exclude: tests/assets
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: v2.4.1
