@@ -204,7 +204,7 @@ class TestMeal:
         defaults.param in menu folder has ARMING_CHECK=0.
         """
         copter_2_apj = build_meals["my_copter_2_apj"]
-        assert not ("ARMING_CHECK" in copter_2_apj)
+        assert "ARMING_CHECK" not in copter_2_apj
 
     def test_defaults_override_4(self, setup_ardupilot, tmp_path):
         """Make sure that the defaults keyword can load a file.

@@ -1,7 +1,7 @@
 """Test cases for the private build_lib module."""
-from typing import List
-from typing import Optional
-from typing import Tuple
+from typing import List  # noqa: F401 # Older mypy needs this import
+from typing import Optional  # noqa: F401 # Older mypy needs this import
+from typing import Tuple  # noqa: F401 # Older mypy needs this import
 
 import pytest
 
