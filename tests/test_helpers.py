@@ -220,7 +220,7 @@ class TestParameterList:
         light_meal = generic_meals["light_meal"]
         new_parameter_list = _helpers.ParameterList(light_meal.param_list)
         assert light_meal.param_list.keys() == new_parameter_list.keys()
-        assert not (light_meal.param_list.params is new_parameter_list.params)
+        assert light_meal.param_list.params is not new_parameter_list.params
 
     def test_subtract(self, generic_meals):
         """Test the __sub__ operation."""
