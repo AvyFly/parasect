@@ -1,13 +1,9 @@
 """Module providing the generation of parameter sets."""
 import os
+from collections.abc import Generator
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Dict
-from typing import Generator
-from typing import Iterable
-from typing import List
 from typing import Optional
-from typing import Tuple
-from typing import Union
 
 from ._helpers import Allergens
 from ._helpers import BoilerplateText
@@ -50,8 +46,8 @@ class Dish:
     def __init__(
         self,
         dish_model: DishModel,
-        model: Optional[str] = None,
-        sn: Optional[str] = None,
+        model: str | None = None,
+        sn: str | None = None,
     ):
         """Class constructor.
 
@@ -80,7 +76,7 @@ class Dish:
         self,
         dish_model: DishModel,
         model: str,
-        sn: Optional[str] = None,
+        sn: str | None = None,
     ) -> None:
         """Read the model and sn information from the param_dict."""
         # Iterate over all selected models
@@ -99,9 +95,7 @@ class Dish:
         else:
             pass
 
-    def get_variant(
-        self, dish_model: DishModel, variant_name: str
-    ) -> Optional[DishModel]:
+    def get_variant(self, dish_model: DishModel, variant_name: str) -> DishModel | None:
         """Extract the variant from a dish."""
         if dish_model.variants:
             try:
@@ -160,7 +154,7 @@ class Dish:
         self.parse_substances(black_list.substances, self.black_params)
 
     def parse_substances(
-        self, substances: Optional[Substances], storage: ParameterList
+        self, substances: Substances | None, storage: ParameterList
     ) -> None:
         """Parse a Substances object into a ParameterList."""
         if substances is not None:
@@ -175,7 +169,7 @@ class Dish:
         """__iter__ dunder method."""
         yield from self.param_list
 
-    def __contains__(self, item: Union[str, Parameter]) -> bool:
+    def __contains__(self, item: str | Parameter) -> bool:
         """Answer if the Dish contains a parameter."""
         return self.param_list.__contains__(item)
 
@@ -187,7 +181,7 @@ class Dish:
 class Calibration(Dish):
     """Parameter class holding calibration parameters."""
 
-    def __init__(self, frame: Optional[str] = None):
+    def __init__(self, frame: str | None = None):
         """Class constructor."""
         param_dict = get_dish(ConfigPaths().staple_dishes, "calibration")
         super().__init__(param_dict, model=frame)
@@ -196,7 +190,7 @@ class Calibration(Dish):
 class Operator(Dish):
     """Parameter class holding operator-defined parameters."""
 
-    def __init__(self, frame: Optional[str] = None):
+    def __init__(self, frame: str | None = None):
         """Class constructor."""
         param_dict = get_dish(ConfigPaths().staple_dishes, "operator")
         super().__init__(param_dict)
@@ -210,9 +204,9 @@ class Meal:
     is_sitl = False
     is_hitl = False
     add_header = False
-    header: Optional[str] = None
+    header: str | None = None
     add_footer = False
-    footer: Optional[str] = None
+    footer: str | None = None
     parent: Optional["Meal"] = None
     add_new = False
     remove_calibration_flag = False
@@ -224,7 +218,7 @@ class Meal:
     def __init__(
         self,
         meals_menu: MealMenuModel,
-        default_params_filepath: Optional[Path],
+        default_params_filepath: Path | None,
         configs_path: Path,
         name: str = "Unknown",
     ):
@@ -279,7 +273,7 @@ class Meal:
         self.decide_on_operator(meal_dict)
 
         # Read configuration specific modules
-        dishes_dict = self.collect_dishes(meal_dict)  # type: Dict[str, Dish]
+        dishes_dict: dict[str, Dish] = self.collect_dishes(meal_dict)
 
         # Compile all custom parameters flat to make sure they don't overwrite each other
         (
@@ -301,7 +295,7 @@ class Meal:
         self,
         meal_dict: MealType,
         all_meals: MealMenuModel,
-        default_params_filepath: Optional[Path],
+        default_params_filepath: Path | None,
         configs_path: Path,
     ) -> None:
         """Check if a parent key is passed and load its presets."""
@@ -335,7 +329,7 @@ class Meal:
         self,
         meal_dict: MealType,
         configs_path: Path,
-        default_params_filepath: Optional[Path],
+        default_params_filepath: Path | None,
     ) -> None:
         """Generate the default parameters list.
 
@@ -392,8 +386,8 @@ class Meal:
             self.remove_operator_flag = False
 
     def collect_parameter_lists(
-        self, modules_dict: Dict[str, Dish]
-    ) -> Tuple[ParameterList, ParameterList, ParameterList]:
+        self, modules_dict: dict[str, Dish]
+    ) -> tuple[ParameterList, ParameterList, ParameterList]:
         """Parse all modules and collect edited, blacklisted and blacklisted groups parameters."""
         edited_param_list = ParameterList()
         black_param_list = ParameterList()
@@ -446,7 +440,7 @@ class Meal:
     def apply_edits(
         self,
         edited_param_list: ParameterList,
-        default_params_filepath: Optional[Path],
+        default_params_filepath: Path | None,
     ) -> None:
         """Edit custom parameters."""
         if not self.add_new:
@@ -468,7 +462,7 @@ class Meal:
                 )
                 self.param_list.add_param(param, safe=False)
 
-    def collect_dishes(self, meal_dict: MealType) -> Dict[str, Dish]:
+    def collect_dishes(self, meal_dict: MealType) -> dict[str, Dish]:
         """Collect all dishes from the configuration dict."""
         dishes_dict = dict()
         for dish_name in meal_dict.keys():
@@ -481,8 +475,8 @@ class Meal:
 
             # Parse the model/serial-number designation
             dish_designation = meal_dict[dish_name]
-            model: Optional[str]
-            sn: Optional[str]
+            model: str | None
+            sn: str | None
             if dish_designation is not None:
                 model_sn = dish_designation.split("/")  # type: ignore # Pydantic guarantees this is a string
                 model = model_sn[0]
@@ -504,7 +498,7 @@ class Meal:
     def build_header_footer(
         self,
         boilerplate_model: BoilerplateText,
-        variant_name: Optional[str],
+        variant_name: str | None,
         format_type: Formats,
     ) -> Generator[str, None, None]:
         """Grab the header and footer sections from the corresponding dish."""
@@ -528,14 +522,14 @@ class Meal:
             variants = boilerplate_model.formats[format_type.value].variants
             if variants is not None:
                 meal_text = variants[variant_name].common
-                for row in meal_text:  # type: ignore # Pydantic guarantees this is a List[str]
+                for row in meal_text:  # type: ignore # Pydantic guarantees this is a list[str]
                     yield row + "\n"
 
     def __str__(self):
         """__str__ dunder method."""
         return self.param_list.__str__()
 
-    def __contains__(self, item: Union[str, Parameter]) -> bool:
+    def __contains__(self, item: str | Parameter) -> bool:
         """Answer if the Meal contains a parameter."""
         return self.param_list.__contains__(item)
 
@@ -704,7 +698,7 @@ class Meal:
             raise ValueError(f"Output format {format} not supported.")
 
 
-def build_meals(names: Optional[List[str]] = None) -> Dict[str, Meal]:
+def build_meals(names: list[str] | None = None) -> dict[str, Meal]:
     """Build the meal of the provided aircraft."""
     meals_menu = get_meals_menu(ConfigPaths().meals)
 
@@ -746,11 +740,11 @@ def build_filename(format: Formats, meal: Meal) -> str:
 
 
 def build_helper(
-    meal_ordered: Optional[str],
+    meal_ordered: str | None,
     format: Formats,
-    input_folder: Optional[str],
-    default_params: Optional[str],
-    output_folder: Optional[str] = None,
+    input_folder: str | None,
+    default_params: str | None,
+    output_folder: str | None = None,
     sitl: bool = False,
 ) -> None:
     """Build parameter sets.
@@ -769,7 +763,7 @@ def build_helper(
     Raises:
         ValueError: If *meal_ordered* is None (hence all the meals will be exported) but no *output_folder* is specified.
     """
-    meal_list: Optional[List[str]]
+    meal_list: list[str] | None
     if meal_ordered is not None:
         meal_list = [meal_ordered]
     else:
@@ -813,7 +807,7 @@ def build_helper(
         export_meal(meal, format, output_folder_path)
 
 
-def convert_str_to_path(path: Optional[str]) -> Optional[Path]:
+def convert_str_to_path(path: str | None) -> Path | None:
     """Convert a str path representation to Optional[Path]."""
     if path:
         return Path(path)
@@ -834,7 +828,7 @@ def make_folder(folder_path: Path) -> None:
             print("Failed to create folder")
 
 
-def export_meal(config: Meal, format: Formats, output_path: Optional[Path]) -> None:
+def export_meal(config: Meal, format: Formats, output_path: Path | None) -> None:
     """Export a configuration to a folder or the screen."""
     if output_path is not None:
         make_folder(output_path)

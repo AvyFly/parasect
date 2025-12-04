@@ -8,18 +8,15 @@ import re
 import typing
 from abc import ABC
 from abc import abstractmethod
+from collections.abc import Callable
+from collections.abc import Generator
+from collections.abc import KeysView
+from collections.abc import Sequence
 from enum import Enum
 from pathlib import Path
 from typing import Any
-from typing import Callable
-from typing import Dict
-from typing import Generator
-from typing import KeysView
-from typing import List
 from typing import Literal
 from typing import Optional
-from typing import Sequence
-from typing import Tuple
 from typing import Union
 from xml.etree.ElementTree import Element as XmlElement  # noqa: S405
 
@@ -103,8 +100,8 @@ class ConfigPaths(Borg):
         self.__dict__ = self._shared_state
 
         if len(self._shared_state) == 0:
-            self.CUSTOM_PATH: Optional[Path] = None
-            self.DEFAULT_PARAMS_PATH: Optional[Path] = None
+            self.CUSTOM_PATH: Path | None = None
+            self.DEFAULT_PARAMS_PATH: Path | None = None
 
     @property
     def path(self) -> Path:
@@ -127,7 +124,7 @@ class ConfigPaths(Borg):
         return self._get_staple_dishes_path()
 
     @property
-    def default_parameters(self) -> Optional[Path]:
+    def default_parameters(self) -> Path | None:
         """Return the path of the default parameters file."""
         return self._get_default_parameters_file()
 
@@ -158,18 +155,18 @@ class ConfigPaths(Borg):
         return configs_path
 
     def _get_meals_path(self) -> Path:
-        path = self.path / "meals.yaml"  # type: Path
+        path = self.path / "meals.yaml"
         return path
 
     def _get_custom_dishes_path(self) -> Path:
-        path = self.path / "custom_dishes"  # type: Path
+        path = self.path / "custom_dishes"
         return path
 
     def _get_staple_dishes_path(self) -> Path:
-        path = self.path / "staple_dishes"  # type: Path
+        path = self.path / "staple_dishes"
         return path
 
-    def _get_default_parameters_file(self) -> Optional[Path]:
+    def _get_default_parameters_file(self) -> Path | None:
         filepath = None
         try:
             filepath = Path(os.environ["PARASECT_DEFAULTS"]).expanduser()
@@ -225,7 +222,7 @@ class Substances(RootModel):
     Each is made up by its name, its value and a justification.
     """
 
-    root: List[Tuple[str, Optional[Union[float, int]], Optional[str]]]
+    root: list[tuple[str, float | int | None, str | None]]
 
     def __iter__(self):
         """Return an interable of the model."""
@@ -235,29 +232,29 @@ class Substances(RootModel):
 class Allergens(BaseModel, extra="forbid"):
     """Contains lists of parameters that are to be removed."""
 
-    substances: Optional[Substances] = None
-    groups: Optional[Substances] = None
+    substances: Substances | None = None
+    groups: Substances | None = None
 
 
 class Recipe(BaseModel, extra="forbid"):
     """A set of ingredients and allergens."""
 
-    ingredients: Optional[Substances] = None
-    allergens: Optional[Allergens] = None
+    ingredients: Substances | None = None
+    allergens: Allergens | None = None
 
 
 class DishModel(BaseModel, extra="forbid"):
     """A complete dish."""
 
-    common: Optional[Recipe] = None
-    variants: Optional[Dict[str, "DishModel"]] = None
+    common: Recipe | None = None
+    variants: dict[str, "DishModel"] | None = None
 
 
 class FormatText(BaseModel, extra="forbid"):
     """Boilerplate text for export formats."""
 
-    common: Optional[List[str]] = None
-    variants: Optional[Dict[str, "FormatText"]] = None
+    common: list[str] | None = None
+    variants: dict[str, "FormatText"] | None = None
 
 
 FormatText.model_rebuild()
@@ -269,12 +266,12 @@ class BoilerplateText(BaseModel):
     For header and footer specification.
     """
 
-    common: Optional[List[str]] = None
-    formats: Dict[str, FormatText]
+    common: list[str] | None = None
+    formats: dict[str, FormatText]
 
 
-MealType = Dict[str, Optional[Union[StrictBool, int, str]]]
-MealsType = Dict[str, MealType]
+MealType = dict[str, Optional[Union[StrictBool, int, str]]]
+MealsType = dict[str, MealType]
 
 DishModel.model_rebuild()
 
@@ -376,8 +373,8 @@ class MealMenuModel(RootModel):
 class CalibrationModel(BaseModel):
     """The Calibration definition."""
 
-    common: Dict[Formats, List[str]]
-    variants: Dict[str, "CalibrationModel"]
+    common: dict[Formats, list[str]]
+    variants: dict[str, "CalibrationModel"]
 
 
 class UserDefinedModel(CalibrationModel):
@@ -389,17 +386,17 @@ class UserDefinedModel(CalibrationModel):
     pass
 
 
-def _build_dict_from_yaml(filepath: Path) -> Dict:
+def _build_dict_from_yaml(filepath: Path) -> dict:
     """Read a .yaml file as a dictionary.
 
     Args:
         filepath: The full file-path to a .yaml file.
 
     Returns:
-        Dict: A dictionary equivalent to the .yaml file.
+        dict: A dictionary equivalent to the .yaml file.
     """
     with open(filepath) as fp:
-        model_dict = yaml.load(fp, Loader=yaml.SafeLoader)  # type: Dict
+        model_dict: dict = yaml.load(fp, Loader=yaml.SafeLoader)
     return model_dict
 
 
@@ -493,7 +490,7 @@ def get_string_from_mavlink_param_type(param_type: int) -> str:
         raise ValueError(f"Unknown PARAM_TYPE {param_type}") from e
 
 
-def cast_param_value(value: Any, param_type: Optional[str]) -> Union[int, float]:
+def cast_param_value(value: Any, param_type: str | None) -> int | float:
     """Convert a string to a parameter value of the given type."""
     if param_type is None:
         raise TypeError("Unknown type to cast value to.")
@@ -511,12 +508,12 @@ class Parameter:
     """A class describing a single parameter."""
 
     name: str
-    param_type: Optional[str]  # String, according to get_string_from_px4_value_type
-    _value: Union[int, float]
+    param_type: str | None  # String, according to get_string_from_px4_value_type
+    _value: int | float
     reasoning = None
     short_desc = None
     long_desc = None
-    default_value: Union[int, float]
+    default_value: int | float
     min_value = float("-inf")
     max_value = float("inf")
     increment = None  # Instruction for increments for UIs
@@ -524,15 +521,15 @@ class Parameter:
     decimal = None  # Suggested increment by the parameter documentation
     reboot_required = False
     readonly: bool
-    group: Optional[str] = None
+    group: str | None = None
     vid: int  # Vehicle ID, default 1
     cid: int  # Component ID, default 1
 
     def __init__(
         self,
         name: str,
-        value: Union[int, float],
-        param_type: Optional[str] = None,
+        value: int | float,
+        param_type: str | None = None,
         vid: int = 1,
         cid: int = 1,
     ) -> None:
@@ -545,7 +542,7 @@ class Parameter:
         self.readonly = False
 
     @property
-    def value(self) -> Union[int, float]:
+    def value(self) -> int | float:
         """Getter for parameter value."""
         if self.param_type == "INT32":
             return int(self._value)
@@ -553,7 +550,7 @@ class Parameter:
             return self._value
 
     @value.setter
-    def value(self, new_value: Union[int, float]) -> None:
+    def value(self, new_value: int | float) -> None:
         """Setter for parameter value."""
         self._value = new_value
 
@@ -612,8 +609,8 @@ class Parameter:
 class ParameterList:
     """A class representing a list of Parameter's."""
 
-    source_file: Optional[str] = None
-    params: Dict[str, Parameter]
+    source_file: str | None = None
+    params: dict[str, Parameter]
 
     def __init__(self, original: Optional["ParameterList"] = None):
         """Class constructor."""
@@ -633,7 +630,7 @@ class ParameterList:
         return f"{name}:{cid}"
 
     @staticmethod
-    def decode_parameter_hash(hash: str) -> Tuple[str, int]:
+    def decode_parameter_hash(hash: str) -> tuple[str, int]:
         """Deduce parameter details from the hash."""
         parts = hash.split(":")
         name = parts[0]
@@ -667,7 +664,7 @@ class ParameterList:
         """__len__ dunder method."""
         return len(self.params)
 
-    def __getitem__(self, key: Union[str, Tuple[str, int]]) -> Parameter:
+    def __getitem__(self, key: str | tuple[str, int]) -> Parameter:
         """__getitem__ dunder method."""
         if isinstance(key, str):
             # The key is only a parameter name. Assume cid == 1.
@@ -678,7 +675,7 @@ class ParameterList:
         param_hash = self.build_param_hash(name, cid)
         return self.params[param_hash]
 
-    def __contains__(self, item: Union[str, Parameter]) -> bool:
+    def __contains__(self, item: str | Parameter) -> bool:
         """Answer if the parameter list contains a parameter."""
         if isinstance(item, str):
             # Assume cid == 1.
@@ -776,7 +773,7 @@ class ParameterList:
         self.params.pop(param_hash, None)
 
 
-def filter_regex(regex_list: List[str], param_list: ParameterList) -> None:
+def filter_regex(regex_list: list[str], param_list: ParameterList) -> None:
     """Remove from param_list all parameters that match any of the regex_list."""
     regex_obj_list = [re.compile(s) for s in regex_list]
     for param in param_list:
@@ -801,7 +798,7 @@ def build_param_from_xml(parameter: XmlElement) -> Parameter:
     return param
 
 
-def build_param_from_qgc(row: List[str]) -> Parameter:
+def build_param_from_qgc(row: list[str]) -> Parameter:
     """Build a Parameter from an QGroundControl-type entry."""
     get_logger().debug(f"Decoding parameter file row: {row}")
     vehicle_id = int(row[0])
@@ -824,10 +821,10 @@ def build_param_from_qgc(row: List[str]) -> Parameter:
     return param
 
 
-def build_param_from_ulog_params(row: List[str]) -> Parameter:
+def build_param_from_ulog_params(row: list[str]) -> Parameter:
     """Build a Parameter from an ulog_params printout entry."""
     param_name = row[0]
-    param_value: Union[int, float]
+    param_value: int | float
     try:
         param_value = int(row[1])
     except ValueError:
@@ -844,7 +841,7 @@ def build_param_from_mavproxy(item: Sequence) -> Parameter:
     item should be a 3-length sequence of strings.
     """
     name = item[0]
-    value: Union[int, float, str]
+    value: int | float | str
     value = item[1]
     try:
         value = int(item[1])
@@ -884,7 +881,7 @@ def build_param_from_iter(item: Sequence) -> Parameter:
 # Read parameter text files
 ###########################
 
-parsers: List[Callable[[Path], ParameterList]] = []
+parsers: list[Callable[[Path], ParameterList]] = []
 
 
 def parser(parser_func: Callable) -> Callable:

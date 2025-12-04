@@ -1,12 +1,6 @@
 """Module providing the comparison of parameter sets."""
 import itertools as it
 from pathlib import Path
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Set
-from typing import Tuple
-from typing import Union
 
 from ._helpers import ConfigPaths
 from ._helpers import filter_regex
@@ -28,8 +22,8 @@ def get_vehicles_comparison(
     param_list_2: ParameterList,
     nocal: bool,
     noop: bool,
-    component: Optional[int] = None,
-) -> List:
+    component: int | None = None,
+) -> list:
     """Top-level comparison function.
 
     Returns a list of comparison results
@@ -68,7 +62,7 @@ def get_vehicles_comparison(
 
 def collect_vid_cid(
     param_list_1: ParameterList, param_list_2: ParameterList
-) -> Dict[int, Set[int]]:
+) -> dict[int, set[int]]:
     """Collect vehicle IDs and component IDs.
 
     Args:
@@ -76,12 +70,12 @@ def collect_vid_cid(
         param_list_2: The second ParameterList to parse for VIDs and CIDs.
 
     Returns:
-        A Dict where the keys are the VIDs found. The value of each key is the
+        A dict where the keys are the VIDs found. The value of each key is the
         CIDs found in every VID.
-        The result will never be an empty Dict because the Parameter object is
+        The result will never be an empty dict because the Parameter object is
         initialized with VID=1 and CID=1.
     """
-    id_dict = dict()  # type: Dict[int, Set[int]]
+    id_dict: dict[int, set[int]] = dict()
     for param in it.chain(param_list_1, param_list_2):
         # If this VID is new, create it
         if param.vid not in id_dict.keys():
@@ -96,9 +90,9 @@ def collect_vid_cid(
 def compare_parameter_lists(
     param_list_1: ParameterList,
     param_list_2: ParameterList,
-    vid: Optional[int],
-    cid: Optional[int],
-) -> List[Tuple[Optional[Parameter], Optional[Parameter]]]:
+    vid: int | None,
+    cid: int | None,
+) -> list[tuple[Parameter | None, Parameter | None]]:
     """Compare two parameter lists, potentially filtering with vid and cid.
 
     Returns a list of tuples. Each tuple contains the old parameter and the new parameter.
@@ -114,8 +108,8 @@ def compare_parameter_lists(
     for param_name in all_param_names:
         param_diff = False
 
-        param_1: Optional[Parameter]
-        param_2: Optional[Parameter]
+        param_1: Parameter | None
+        param_2: Parameter | None
         # Parameter only in first list
         if param_name in param_names_1 and param_name not in param_names_2:
             param_1 = param_list_1[param_name]
@@ -151,10 +145,10 @@ def compare_parameter_lists(
 
 
 def param_id_test(
-    param_1: Optional[Parameter],
-    param_2: Optional[Parameter],
-    vid: Optional[int],
-    cid: Optional[int],
+    param_1: Parameter | None,
+    param_2: Parameter | None,
+    vid: int | None,
+    cid: int | None,
 ) -> bool:
     """Decide if the two parameters should be compared with each other given the demanded vehicle id and component id.
 
@@ -191,7 +185,7 @@ def param_id_test(
         return False
 
 
-def comparison_spec_1(vid: Optional[int], cid: Optional[int]) -> bool:
+def comparison_spec_1(vid: int | None, cid: int | None) -> bool:
     """Decide if two parameters should be compared in the context of the provided vid and cid."""
     if (vid is None) ^ (cid is None):
         raise ValueError("Unhandled input values")
@@ -205,10 +199,10 @@ def comparison_spec_1(vid: Optional[int], cid: Optional[int]) -> bool:
 
 
 def comparison_spec_2(
-    param_1: Optional[Parameter],
-    param_2: Optional[Parameter],
-    vid: Optional[int],
-    cid: Optional[int],
+    param_1: Parameter | None,
+    param_2: Parameter | None,
+    vid: int | None,
+    cid: int | None,
 ) -> bool:
     """If p1 is None, then test only for p2. And vice versa.
 
@@ -234,10 +228,10 @@ def comparison_spec_2(
 
 
 def comparison_spec_3(
-    param_1: Optional[Parameter],
-    param_2: Optional[Parameter],
-    vid: Optional[int],
-    cid: Optional[int],
+    param_1: Parameter | None,
+    param_2: Parameter | None,
+    vid: int | None,
+    cid: int | None,
 ) -> bool:
     """If both parameters' ids match the requested, do compare them.
 
@@ -268,14 +262,14 @@ def comparison_spec_3(
 #     return True
 
 
-def values_differ(v1: Union[int, float], v2: Union[int, float]) -> bool:
+def values_differ(v1: int | float, v2: int | float) -> bool:
     """Compare if two values differ up to the level of precision."""
     return abs(v1 - v2) / (max(abs(v1), abs(v2)) + EPS) > PARAM_EPS_PCT
 
 
 def get_column_lengths(
-    comparison_list: List[Tuple[Optional[Parameter], Optional[Parameter]]]
-) -> List[int]:
+    comparison_list: list[tuple[Parameter | None, Parameter | None]]
+) -> list[int]:
     """Find max param column lengths."""
     max_param_length = 1
     max_value_1_length = 1
@@ -301,8 +295,8 @@ def get_column_lengths(
 
 
 def generate_comparison_strings(
-    comparison_list: List[Tuple[Optional[Parameter], Optional[Parameter]]],
-    column_lengths: List[int],
+    comparison_list: list[tuple[Parameter | None, Parameter | None]],
+    column_lengths: list[int],
 ) -> str:
     """Generate the comparison string output, given a comparison list.
 
@@ -342,8 +336,8 @@ def generate_comparison_strings(
 
 
 def build_comparison_row(
-    param_1: Optional[Parameter],
-    param_2: Optional[Parameter],
+    param_1: Parameter | None,
+    param_2: Parameter | None,
     name_len: int,
     value_1_len: int,
     value_2_len: int,
@@ -379,9 +373,9 @@ def build_comparison_row(
 
 
 def build_comparison_string(
-    comparison_lists: List[List[Tuple[Optional[Parameter], Optional[Parameter]]]],
-    file1: Optional[str],
-    file2: Optional[str],
+    comparison_lists: list[list[tuple[Parameter | None, Parameter | None]]],
+    file1: str | None,
+    file2: str | None,
 ) -> str:
     """Generate the comparison program textual output."""
     # Find column lengths and number of changed parameters
@@ -425,10 +419,10 @@ def build_comparison_string(
 def compare_helper(
     file_1: str,
     file_2: str,
-    input_folder: Optional[str],
+    input_folder: str | None,
     nocal: bool,
     noop: bool,
-    component: Optional[int],
+    component: int | None,
 ) -> str:
     """Compare two parameter files.
 

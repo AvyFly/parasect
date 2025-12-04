@@ -2,7 +2,6 @@
 import cProfile
 from importlib.metadata import version
 from pstats import Stats
-from typing import Optional
 
 import click
 
@@ -61,10 +60,10 @@ def cli(debug: bool) -> None:
 def compare(
     file_1: str,
     file_2: str,
-    input_folder: Optional[str],
+    input_folder: str | None,
     nocal: bool,
     noop: bool,
-    component: Optional[int],
+    component: int | None,
 ) -> None:
     """Compare command."""
     s = compare_helper(file_1, file_2, input_folder, nocal, noop, component)
@@ -109,11 +108,11 @@ def compare(
     help="Specify the default parameters file to apply to all Meals.",
 )
 def build(
-    config: Optional[str],
+    config: str | None,
     format: str,
-    input_folder: Optional[str],
-    default_parameters: Optional[str],
-    output_folder: Optional[str],
+    input_folder: str | None,
+    default_parameters: str | None,
+    output_folder: str | None,
 ) -> None:
     """Build command."""
     build_helper(
