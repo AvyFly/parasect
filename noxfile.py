@@ -8,15 +8,17 @@ from textwrap import dedent
 import nox
 
 try:
-    from nox_poetry import Session
-    from nox_poetry import session
-except ImportError:
+    from nox import Session
+    from nox_uv import session
+except ImportError as e:
     message = f"""\
-    Nox failed to import the 'nox-poetry' package.
+    Nox failed to import the 'nox-uv' package.
 
     Please install it using the following command:
 
-    {sys.executable} -m pip install nox-poetry"""
+    {sys.executable} -m pip install nox-uv
+    
+    {e}"""
     raise SystemExit(dedent(message)) from None
 
 
@@ -110,7 +112,7 @@ def precommit(session: Session) -> None:
 @session(python="3.11")
 def safety(session: Session) -> None:
     """Scan dependencies for insecure packages."""
-    requirements = session.poetry.export_requirements()
+    requirements = session.export_requirements()
     session.install("safety")
     session.run("safety", "check", "--full-report", f"--file={requirements}")
 
@@ -132,7 +134,7 @@ def tests(session: Session) -> None:
     session.install(".")
     session.install("coverage[toml]", "pytest", "pygments")
     try:
-        session.run("coverage", "run", "--parallel", "-m", "pytest", *session.posargs)
+        session.run("coverage", "run", "--parallel", "-m", "pytest", "-vvv", *session.posargs)
     finally:
         if session.interactive:
             session.notify("coverage", posargs=[])
@@ -156,7 +158,7 @@ def typeguard(session: Session) -> None:
     """Runtime type checking using Typeguard."""
     session.install(".")
     session.install("pytest", "typeguard", "pygments")
-    session.run("pytest", f"--typeguard-packages={package}", *session.posargs)
+    session.run("pytest", "-vvv", f"--typeguard-packages={package}", *session.posargs)
 
 
 @session(python=python_versions)

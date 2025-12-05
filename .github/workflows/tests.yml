@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6.0.1
-      - run: pipx run ruff check --output-format=github --target-version=py310
+      - uses: astral-sh/ruff-action@v3
 
   tests:
     name: ${{ matrix.session }} ${{ matrix.python }} / ${{ matrix.os }}
@@ -45,30 +45,9 @@ jobs:
           python-version: ${{ matrix.python }}
           python-version-file: pyproject.toml
 
-      - name: Upgrade pip
-        run: |
-          pip install --constraint=.github/workflows/constraints.txt pip
-          pip --version
+      - uses: astral-sh/setup-uv@v7
 
-      - name: Upgrade pip in virtual environments
-        shell: python
-        run: |
-          import os
-          import pip
-
-          with open(os.environ["GITHUB_ENV"], mode="a") as io:
-              print(f"VIRTUALENV_PIP={pip.__version__}", file=io)
-
-      - name: Install Poetry
-        run: |
-          pipx install --pip-args=--constraint=.github/workflows/constraints.txt poetry
-          poetry --version
-
-      - name: Install Nox
-        run: |
-          pipx install --pip-args=--constraint=.github/workflows/constraints.txt nox
-          pipx inject --pip-args=--constraint=.github/workflows/constraints.txt nox nox-poetry
-          nox --version
+      - run: uv tool install --with=nox-uv nox
 
       - name: Compute pre-commit cache key
         if: matrix.session == 'pre-commit'
@@ -125,21 +104,9 @@ jobs:
           python-version: "3.11"
           python-version-file: pyproject.toml
 
-      - name: Upgrade pip
-        run: |
-          pip install --constraint=.github/workflows/constraints.txt pip
-          pip --version
+      - uses: astral-sh/setup-uv@v7
 
-      - name: Install Poetry
-        run: |
-          pipx install --pip-args=--constraint=.github/workflows/constraints.txt poetry
-          poetry --version
-
-      - name: Install Nox
-        run: |
-          pipx install --pip-args=--constraint=.github/workflows/constraints.txt nox
-          pipx inject --pip-args=--constraint=.github/workflows/constraints.txt nox nox-poetry
-          nox --version
+      - run: uv tool install --with=nox-uv nox
 
       - name: Download coverage data
         uses: actions/download-artifact@v6
