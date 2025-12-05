@@ -22,7 +22,10 @@ def runner() -> CliRunner:
 
 def test_main_succeeds(runner: CliRunner) -> None:
     """It exits with a status code of zero."""
-    result = runner.invoke(__main__.cli)
+    try:
+        result = runner.invoke(__main__.cli)
+    except Exception as e:
+        pytest.fail(f"Invocation of main CLI failed with exception: {e}")
     assert result.exit_code == 0
 
 

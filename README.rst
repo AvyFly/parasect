@@ -65,7 +65,7 @@ List of currently supported autopilots:
 Requirements
 ------------
 
-*Parasect* is a pure-Python project. Its requirements are managed by the Poetry_ dependency manager.
+*Parasect* is a pure-Python project. Its requirements are managed by the uv_ dependency manager.
 When you install *Parasect* via pip_ its requirements will also be installed automatically.
 
 Currently *Parasect* has been tested:
@@ -155,7 +155,7 @@ The project logo was created by `Cynthia de Vries <Cynthia_>`_.
 .. _Concepts: https://parasect.readthedocs.io/en/latest/concepts.html
 .. _PX4: https://px4.io/
 .. _Ardupilot: https://ardupilot.org/
-.. _Poetry: https://python-poetry.org/
+.. _uv: https://docs.astral.sh/uv/
 .. _Avy: https://avy.eu
 .. github-only
 .. _Contributor Guide: CONTRIBUTING.rst

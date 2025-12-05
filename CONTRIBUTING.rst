@@ -45,41 +45,40 @@ How to set up your development environment
 
 First of all, clone the *Parasect* repository.
 
-Then, you need Python 3.8+ and the following tools:
+Then, you need Python 3.10+ and the following tools:
 
-- Poetry_
+- uv_
 - Nox_
-- nox-poetry_
+- nox-uv_
 
-Install Poetry_ by downloading and running the following script:
-
-.. code:: console
-
-   $ curl -sSL https://install.python-poetry.org | python3 -
-
-
-Install Nox_ and nox-poetry_:
+Install uv_ by downloading and running the following script:
 
 .. code:: console
 
-   $ pipx install nox
-   $ pipx inject nox nox-poetry
+   $ curl -LsSf https://astral.sh/uv/install.sh | sh
+
+
+Install Nox_ and nox-uv_:
+
+.. code:: console
+
+   $ uv tool install --with=nox-uv nox
 
 Navigate into the location where you cloned *Parasect* and install the package with development requirements:
 
 .. code:: console
 
-   $ poetry install
+   $ uv install
 
-You can now run an interactive Poetry shell, giving you access to the virtual environment.
+You can now run an interactive uv shell, giving you access to the virtual environment.
 
 .. code:: console
 
-   $ poetry shell
+   $ uv shell
 
-.. _Poetry: https://python-poetry.org/
+.. _uv: https://docs.astral.sh/uv/
 .. _Nox: https://nox.thea.codes/
-.. _nox-poetry: https://nox-poetry.readthedocs.io/
+.. _nox-uv: https://github.com/dantebben/nox-uv/
 
 
 How to test the project
