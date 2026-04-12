@@ -398,11 +398,16 @@ class TestBuildFilename:
     def test_apm(self, build_meals):
         """Test the apm format."""
         name = build_lib.build_filename(_helpers.Formats.apm, build_meals["my_vtol_1"])
-        assert Path(name).suffix == ".param"
+        assert Path(name).suffix == ".parm"
 
     def test_apj(self, build_meals):
         """Test the apm format."""
         name = build_lib.build_filename(_helpers.Formats.apj, build_meals["my_vtol_1"])
+        assert Path(name).suffix == ".parm"
+    
+    def test_mp(self, build_meals):
+        """Test the MissionPlanner format."""
+        name = build_lib.build_filename(_helpers.Formats.mp, build_meals["my_vtol_1"])
         assert Path(name).suffix == ".param"
 
 

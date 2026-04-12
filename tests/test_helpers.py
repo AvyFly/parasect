@@ -390,7 +390,7 @@ class TestPX4ParamReaders:
         assert parameter_list["BAT1_A_PER_V"].value == pytest.approx(36.364)
 
     def test_ulog_param_2(self, tmp_path):
-        """Verify that a ulog file with a number in the first position raises an exception."""
+        """Verify that a MissionPlanner (ulog) file with a number in the first position raises an exception."""
         path = tmp_path
         new_file = path / "edited.params"
         old_fp = open(utils.PX4_ULOG_PARAMS_FILE)
@@ -401,10 +401,10 @@ class TestPX4ParamReaders:
         new_fp.writelines(old_lines[50:-1])  # Write the rest of the lines
         new_fp.close()
         with pytest.raises(SyntaxError) as exc_info:
-            _helpers.read_params_ulog_param(new_file)
+            _helpers.read_params_missionplanner(new_file)
         assert (
             str(exc_info.value)
-            == "File is not of ulog format:\nFirst row element must be a parameter name string"
+            == "File is not of MissionPlanner format:\nMP: First row element must be a parameter name string."
         )
 
     def test_ulog_param_empty(self, tmp_path):
@@ -414,11 +414,11 @@ class TestPX4ParamReaders:
         with open(new_file, "w") as new_fp:
             new_fp.writelines([])  # Insert empty file
         with pytest.raises(SyntaxError) as exc_info:
-            _helpers.read_params_ulog_param(new_file)
+            _helpers.read_params_missionplanner(new_file)
         print(exc_info.value)
         assert (
             str(exc_info.value)
-            == "File is not of ulog format:\nCould not extract any parameter from file."
+            == "File is not of MissionPlanner format:\nCould not extract any parameter from file."
         )
 
     def test_unknown_protocol(self, tmp_path):
@@ -434,12 +434,56 @@ class TestPX4ParamReaders:
         assert str(exc_info.value) == "Could not recognize log protocol."
 
 
+class TestArdupilotMissionPlannerParamReaders:
+    """Test the MissionPlanner and more modern Ardupilot parameter file decoders."""
+
+    def test_mavproxy(self):
+        """Test reading from a parameter file saved by MAVProxy."""
+        parameter_list = _helpers.read_params(utils.ARDUPILOT_DEFAULT_PARAM)
+        assert parameter_list["ARMING_ACCTHRESH"].value == pytest.approx(0.75)
+
+    def test_split_row(self):
+        """Test that a number as the first element throws an error."""
+        row = "42,42 # Comment"
+        with pytest.raises(SyntaxError) as exc_info:
+            _helpers.split_missionplanner_row(row)
+        assert (
+            str(exc_info.value) == "MP: First row element must be a parameter name string."
+        )
+
+    def test_split_row_2(self):
+        """Ensure all 3 elements are decoded."""
+        row = "NAME, 42 # Batman"
+        result = _helpers.split_missionplanner_row(row)
+        expected = ("NAME", "42", "Batman")
+        assert all([a == b for a, b in zip(result, expected)])  # noqa: B905
+        # Disabling qa because 'strict' keyword not supported before 3.10        
+
+    def test_parse_failure(self):
+        """Ensure an exception is thrown if parsing fails."""
+        with pytest.raises(SyntaxError) as exc_info:
+            _helpers.read_params_missionplanner(utils.PX4_GAZEBO_PARAMS)
+        assert "File is not of MissionPlanner format" in str(exc_info.value)
+
+
+    def test_cyrillic_content(self):
+        """Ensure that value types 2,4,6,9 are correctly read."""
+        parameter_list = _helpers.read_params(utils.ARDUPILOT_MP_PARAM)
+        assert parameter_list["AHRS_OPTIONS"].value == 3
+        assert parameter_list["AHRS_OPTIONS"].reasoning == "вимкнути DCM fallback in VTOL and FW"
+        assert parameter_list["AHRS_GPS_USE"].value == 1
+        assert parameter_list["AHRS_ORIG_LAT"].value == pytest.approx(37.09066)
+
+        assert "ACRO_YAW_RATE" not in parameter_list
+        assert "AHRS_ORIG_ALT" not in parameter_list
+
+
 class TestArdupilotParamReaders:
     """Test the various Ardupilot parameter file decoders."""
 
     def test_mavproxy(self):
         """Test reading from a parameter file saved by MAVProxy."""
-        parameter_list = _helpers.read_params(utils.ARDUPILOT_DEFAULT_PARAMS)
+        parameter_list = _helpers.read_params(utils.ARDUPILOT_DEFAULT_PARM)
         assert parameter_list["ARMING_ACCTHRESH"].value == pytest.approx(0.75)
 
     def test_mavproxy_empty(self, tmp_path):
@@ -482,7 +526,7 @@ class TestArdupilotParamReaders:
 
     def test_qgc_rare_types(self):
         """Ensure that value types 2,4,6,9 are correctly read."""
-        parameter_list = _helpers.read_params(utils.ARDUPILOT_ODD_PARAM_VALUES_FILE)
+        parameter_list = _helpers.read_params(utils.ARDUPILOT_ODD_PARAMS_VALUES_FILE)
         assert parameter_list["ACRO_TRAINER"].value == 2
         assert parameter_list["ANGLE_MAX"].value == 3000
         assert parameter_list["ARMING_CHECK"].value == 8214

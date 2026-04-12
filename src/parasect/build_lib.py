@@ -642,30 +642,42 @@ class Meal:
         yield from self.retrieve_header_footer("footer", Formats.csv)
 
     def export_to_apm(
-        self, include_readonly: bool = False
+        self, include_readonly: bool = False, csv: bool = False, comments: bool = False
     ) -> Generator[str, None, None]:
         """Export as apm parameter file.
 
         INPUTS:
             include_readonly: flag to enable including @READONLY on a parameter.
                 Necessary for apj tools, unsuitable for loading via a GCS.
+            csv: flag to use comma-separated format instead of tab-separated.
+            comments: flag to add parameter descriptions as comments after #.
         """
         # Read header
         yield from self.retrieve_header_footer("header", Formats.apm)
 
         indentation = ""
+        separator = "," if csv else "\t"
 
         param_hashes = sorted(self.param_list.keys())
-        for param_name in param_hashes:
-            param_name = self.param_list[param_name].name
-            param_value = self.param_list[param_name].get_pretty_value()
-            is_readonly = self.param_list[param_name].readonly
+        for param_hash in param_hashes:
+            param = self.param_list[param_hash]
+            param_name = param.name
+            param_value = param.get_pretty_value()
+            is_readonly = param.readonly
+            
+            # Build the parameter line
+            line = f"{indentation}{param_name}{separator}{param_value}"
+            
+            # Add readonly marker if needed
             if include_readonly and is_readonly:
-                readonly_string = "\t@READONLY"
-            else:
-                readonly_string = ""
-
-            yield f"{indentation}{param_name}\t{param_value}{readonly_string}\n"
+                readonly_string = f"{separator}@READONLY" if csv else "\t@READONLY"
+                line += readonly_string
+            
+            # Add comment if requested and description is available
+            if comments and getattr(param, 'reasoning', None):
+                line += f" # {param.reasoning}"
+            
+            yield line + "\n"
 
         # Read footer
         yield from self.retrieve_header_footer("footer", Formats.apm)
@@ -694,6 +706,8 @@ class Meal:
             return self.export_to_apm(include_readonly=False)
         elif format == Formats.apj:
             return self.export_to_apm(include_readonly=True)
+        elif format == Formats.mp:
+            return self.export_to_apm(include_readonly=False, csv=True, comments=True)
         else:
             raise ValueError(f"Output format {format} not supported.")
 
@@ -734,6 +748,8 @@ def build_filename(format: Formats, meal: Meal) -> str:
             filename += ".hil"
         return filename
     elif format in (Formats.apm, Formats.apj):
+        return f"{meal.name}.parm"
+    elif format == Formats.mp:
         return f"{meal.name}.param"
     else:
         raise ValueError(f"Unsupported format {format}")

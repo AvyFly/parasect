@@ -1,0 +1,19 @@
+#ACRO_YAW_RATE,90
+
+AHRS_ORIENTATION,25 # realflight
+
+
+### Variant 1 - GPS module + Spoofing
+AHRS_GPS_USE,1
+GPS1_TYPE,1
+
+
+### Variant 2 - LUA Script
+#SCR_ENABLE,1
+AHRS_ORIG_LAT,37.090662
+#AHRS_ORIG_LON,-3.0745569
+#AHRS_ORIG_ALT,2736
+
+
+AHRS_OPTIONS,3  # вимкнути DCM fallback in VTOL and FW
+#AHRS_OPTIONS,7 # don't disable AIRSPEED using EKF біт3 (в симуляторі результати гірше)

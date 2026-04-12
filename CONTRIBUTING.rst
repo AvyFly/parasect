@@ -70,6 +70,8 @@ Navigate into the location where you cloned *Parasect* and install the package w
 .. code:: console
 
    $ poetry install
+   $ poetry self add poetry-plugin-shell
+   $ poetry self add poetry-plugin-export
 
 You can now run an interactive Poetry shell, giving you access to the virtual environment.
 

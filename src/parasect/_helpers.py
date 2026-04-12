@@ -198,6 +198,8 @@ class Formats(Enum):
     """Ardupilot-compatible file."""
     apj = "apj"
     """File compatible with Ardupilot's apj tool."""
+    mp = "mp"
+    """Ardupilot Mission Planner comma separated file with comments."""
 
 
 ReservedOptions = Literal[
@@ -821,20 +823,6 @@ def build_param_from_qgc(row: list[str]) -> Parameter:
     return param
 
 
-def build_param_from_ulog_params(row: list[str]) -> Parameter:
-    """Build a Parameter from an ulog_params printout entry."""
-    param_name = row[0]
-    param_value: int | float
-    try:
-        param_value = int(row[1])
-    except ValueError:
-        param_value = float(row[1])
-
-    param = Parameter(param_name, param_value)
-
-    return param
-
-
 def build_param_from_mavproxy(item: Sequence) -> Parameter:
     """Convert a mavproxy parameter line to a parameter.
 
@@ -951,43 +939,10 @@ def read_params_qgc(filepath: Path) -> ParameterList:
             raise (SyntaxError("Could not extract any parameter from file."))
 
         return param_list
+    except UnicodeDecodeError as e:
+        raise SyntaxError(f"File encoding error - not a valid QGC parameter file: {e}") from e
     except SyntaxError as e:
         raise SyntaxError(f"File is not of QGC format:\n{e}") from e
-
-
-@parser
-def read_params_ulog_param(filepath: Path) -> ParameterList:
-    """Read and parse the outputs of the ulog_params program."""
-    param_list = ParameterList()
-
-    try:
-        with open(filepath) as csvfile:
-            param_reader = csv.reader(csvfile, delimiter=",")
-            for param_row in param_reader:  # pragma: no branch
-                if param_row[0][0] == "#":  # Skip comment lines
-                    continue
-                # Check if line has exactly two elements
-                if len(param_row) != 2:
-                    raise SyntaxError(
-                        f"Invalid number of elements for ulog param decoder: {len(param_row)}"
-                    )
-                # Check if first element is a string
-                try:
-                    float(param_row[0])
-                    raise SyntaxError(
-                        "First row element must be a parameter name string"
-                    )
-                except ValueError:
-                    pass
-                param = build_param_from_ulog_params(param_row)
-                param_list.add_param(param)
-
-        if len(param_list.params) == 0:
-            raise (SyntaxError("Could not extract any parameter from file."))
-
-        return param_list
-    except SyntaxError as e:
-        raise SyntaxError(f"File is not of ulog format:\n{e}") from e
 
 
 def split_mavproxy_row(row: str) -> Sequence:
@@ -1015,13 +970,41 @@ def split_mavproxy_row(row: str) -> Sequence:
     return params
 
 
+def split_missionplanner_row(row: str) -> Sequence:
+    """Split a line, assuming it is MissionPlanner or ULOG (as its subset) syntax."""
+    params = row.split(",", 1)
+    # Check if there's at least one comma (should have 2 parts)
+    if len(params) < 2:
+        raise SyntaxError("MP: Line must contain at least one comma separator.")
+    
+    # Check if first element is a string
+    try:
+        float(params[0])
+        raise SyntaxError("MP: First row element must be a parameter name string.")
+    except ValueError:
+        pass
+
+    value_reasoning = params[1].split("#", 1)
+    params[1] = value_reasoning[0].strip()
+    try:
+        float(params[1])
+    except ValueError as e:
+        raise SyntaxError("MP: First row element must be a parameter name string.") from e
+    if len(value_reasoning) <= 1:
+        params.append("")
+    else:
+        params.append(value_reasoning[1].strip())
+
+    return params
+
+
 @parser
 def read_params_mavproxy(filepath: Path) -> ParameterList:
     """Read and parse the outputs of mavproxy."""
     param_list = ParameterList()
 
     try:
-        with open(filepath) as f:
+        with open(filepath, encoding='utf-8') as f:
             for line in f:  # pragma: no branch
                 if line[0] == "#":  # Skip comment lines
                     continue
@@ -1035,6 +1018,31 @@ def read_params_mavproxy(filepath: Path) -> ParameterList:
         return param_list
     except SyntaxError as e:
         raise SyntaxError(f"File is not of mavproxy format:\n{e}") from e
+
+
+@parser
+def read_params_missionplanner(filepath: Path) -> ParameterList:
+    """Read and parse the outputs of MissionPlanner or ULOG (as its subset)."""
+    param_list = ParameterList()
+
+    try:
+        with open(filepath, encoding='utf-8') as f:
+            for line in f:  # pragma: no branch
+                if line[0] == "#":  # Skip comment lines
+                    continue
+                # skip empty lines
+                if line.strip() == "":
+                    continue
+                params = split_missionplanner_row(line)
+                param = build_param_from_mavproxy(params)
+                param_list.add_param(param)
+
+        if len(param_list.params) == 0:
+            raise (SyntaxError("Could not extract any parameter from file."))
+
+        return param_list
+    except SyntaxError as e:
+        raise SyntaxError(f"File is not of MissionPlanner format:\n{e}") from e
 
 
 def read_params(filepath: Path) -> ParameterList:

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "parasect"
-version = "1.2.0"
+version = "1.2.1-dev"
 description = "Utility for manipulating parameter sets for autopilots."
 authors = ["George Zogopoulos <geo.zogop.papal@gmail.com>"]
 license = "MIT"
